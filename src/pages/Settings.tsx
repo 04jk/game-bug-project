@@ -1,9 +1,9 @@
+
 import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import {
   Form,
   FormControl,
@@ -108,7 +108,7 @@ const Settings = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold mb-1">Settings</h1>
-        <p className="text-muted-foreground">Manage your account and application preferences</p>
+        <p className="text-gray-500">Manage your account and application preferences</p>
       </div>
       
       <Tabs defaultValue="profile" className="w-full">
@@ -408,14 +408,21 @@ const Settings = () => {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Theme</FormLabel>
-                          <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
-                              <FormDescription>
-                                Select your preferred theme
-                              </FormDescription>
-                            </div>
-                            <ThemeToggle />
-                          </div>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select theme" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="light">Light</SelectItem>
+                              <SelectItem value="dark">Dark</SelectItem>
+                              <SelectItem value="system">System</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Select your preferred theme.
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
