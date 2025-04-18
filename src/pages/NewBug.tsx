@@ -30,8 +30,15 @@ const NewBug = () => {
   });
   
   const onSubmit = (values: BugFormData) => {
+    // Since the form validation ensures all fields are defined,
+    // we can safely pass them to addBug as non-optional values
     const newBug = addBug({
-      ...values,
+      title: values.title,
+      description: values.description,
+      stepsToReproduce: values.stepsToReproduce,
+      severity: values.severity,
+      gameArea: values.gameArea,
+      platform: values.platform,
       reportedBy: currentUser.name,
       status: BugStatus.NEW,
     });
