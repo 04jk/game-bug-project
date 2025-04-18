@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
-import { BugSeverity } from '@/types/bug';
+import { BugSeverity, BugStatus } from '@/types/bug';
 import { addBug, currentUser } from '@/data/mockData';
 import { toast } from 'sonner';
 
@@ -67,7 +67,7 @@ const NewBug = () => {
     const newBug = addBug({
       ...values,
       reportedBy: currentUser.name,
-      status: "New", // BugStatus.NEW but as string to match enum
+      status: BugStatus.NEW, // Fixed: Using the proper enum value instead of string
     });
     
     toast.success("Bug reported successfully!");
