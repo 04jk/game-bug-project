@@ -19,6 +19,11 @@ export const bugFormSchema = z.object({
   platform: z.string().min(1, {
     message: "Platform is required.",
   }),
+  attachments: z.array(z.object({
+    url: z.string(),
+    type: z.string(),
+    name: z.string()
+  })).optional()
 });
 
 export type BugFormData = z.infer<typeof bugFormSchema>;

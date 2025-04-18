@@ -12,6 +12,7 @@ import { addBug, currentUser } from '@/data/mockData';
 import { toast } from 'sonner';
 import { BugMetadataFields } from '@/components/bug-form/BugMetadataFields';
 import { BugDescriptionFields } from '@/components/bug-form/BugDescriptionFields';
+import { BugAttachments } from '@/components/bug-form/BugAttachments';
 import { bugFormSchema, type BugFormData } from '@/schemas/bugFormSchema';
 
 const NewBug = () => {
@@ -26,6 +27,7 @@ const NewBug = () => {
       severity: undefined,
       gameArea: "",
       platform: "",
+      attachments: []
     },
   });
   
@@ -74,6 +76,7 @@ const NewBug = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <BugDescriptionFields form={form} />
               <BugMetadataFields form={form} />
+              <BugAttachments form={form} />
               
               <div className="flex items-center justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => navigate('/bugs')}>
