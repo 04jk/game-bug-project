@@ -19,6 +19,7 @@ import { RoleProvider } from "./contexts/RoleContext";
 import UserManagement from "./pages/admin/UserManagement";
 import RoleGuard from "./components/auth/RoleGuard";
 import { UserRole } from "./types/user";
+import ChatRoom from "./pages/ChatRoom";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -64,6 +65,21 @@ const App = () => {
                 } 
               />
               
+              {/* Chat Room Route - For Developers and Testers */}
+              <Route 
+                path="/chat" 
+                element={
+                  <Layout>
+                    <RoleGuard 
+                      allowedRoles={[UserRole.DEVELOPER, UserRole.TESTER, UserRole.ADMIN]}
+                      fallback={<Navigate to="/" replace />}
+                    >
+                      <ChatRoom />
+                    </RoleGuard>
+                  </Layout>
+                } 
+              />
+              
               {/* Project Manager & Admin Routes */}
               <Route 
                 path="/analytics" 
@@ -97,7 +113,7 @@ const App = () => {
               {/* Common Routes */}
               <Route path="/settings" element={<Layout><Settings /></Layout>} />
               <Route path="/about" element={<Layout><About /></Layout>} />
-              <Route path="/info" element={<InfoLayout />}>
+              <Route path="/info" element={<InfoLayout>}>
                 <Route path="getting-started" element={<GettingStarted />} />
               </Route>
               <Route path="*" element={<NotFound />} />

@@ -9,9 +9,10 @@ export const users = [
   { id: "user5", name: "Alex Admin", email: "alex@example.com", role: UserRole.ADMIN }
 ];
 
+// Changed to admin for testing all features
 export const currentUser = {
-  id: "user1",
-  name: "John Developer",
-  email: "john@example.com",
-  role: UserRole.DEVELOPER
+  id: "user5",
+  name: "Alex Admin",
+  email: "alex@example.com",
+  role: UserRole.ADMIN
 };

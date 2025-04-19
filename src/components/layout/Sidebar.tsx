@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Bug, ChevronLeft, Home, BarChart2, PlusSquare, Settings, LogOut, Users, FileText } from 'lucide-react';
+import { Bug, ChevronLeft, Home, BarChart2, PlusSquare, Settings, LogOut, Users, FileText, MessageSquare, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRole } from '@/contexts/RoleContext';
 
@@ -13,7 +13,7 @@ interface SidebarProps {
 
 const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
   const location = useLocation();
-  const { userRole, isAdmin, isProjectManager } = useRole();
+  const { userRole, isAdmin, isProjectManager, isDeveloper, isTester } = useRole();
   
   // Base navigation items for all users
   const baseNavItems = [
@@ -25,9 +25,12 @@ const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
     Tester: [
       { path: '/new-bug', label: 'Report Bug', icon: <PlusSquare className="h-5 w-5" /> },
       { path: '/bugs', label: 'My Bugs', icon: <Bug className="h-5 w-5" /> },
+      { path: '/chat', label: 'Chat Rooms', icon: <MessageSquare className="h-5 w-5" /> },
     ],
     Developer: [
       { path: '/bugs', label: 'Assigned Bugs', icon: <Bug className="h-5 w-5" /> },
+      { path: '/chat', label: 'Chat Rooms', icon: <MessageSquare className="h-5 w-5" /> },
+      { path: '/search', label: 'Search', icon: <Search className="h-5 w-5" /> },
     ],
     'Project Manager': [
       { path: '/bugs', label: 'All Bugs', icon: <Bug className="h-5 w-5" /> },
@@ -38,6 +41,7 @@ const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
       { path: '/bugs', label: 'All Bugs', icon: <Bug className="h-5 w-5" /> },
       { path: '/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
       { path: '/analytics', label: 'Analytics', icon: <BarChart2 className="h-5 w-5" /> },
+      { path: '/chat', label: 'Chat Rooms', icon: <MessageSquare className="h-5 w-5" /> },
     ],
   };
   
