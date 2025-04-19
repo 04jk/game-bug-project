@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Bug, ChevronLeft, Home, BarChart2, PlusSquare, Settings, LogOut, Users, FileText, MessageSquare, Search } from 'lucide-react';
+import { Bug, ChevronLeft, Home, BarChart2, PlusSquare, Settings, LogOut, Users, FileText, MessageSquare, Search, UserPlus, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRole } from '@/contexts/RoleContext';
+import { toast } from 'sonner';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -13,6 +14,7 @@ interface SidebarProps {
 
 const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { userRole, isAdmin, isProjectManager, isDeveloper, isTester } = useRole();
   
   // Base navigation items for all users
@@ -54,6 +56,12 @@ const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
     ...roleNavItems,
     { path: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
   ];
+
+  const handleLogout = () => {
+    // In a real app with Supabase auth, would call supabase.auth.signOut()
+    toast.success("You have been logged out");
+    navigate('/login');
+  };
 
   return (
     <div 
@@ -100,6 +108,34 @@ const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
                 </Link>
               </li>
             ))}
+            
+            {/* Auth links */}
+            <li>
+              <Link
+                to="/register"
+                className={cn(
+                  "flex items-center rounded-md px-3 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100",
+                  location.pathname === "/register" && "bg-primary text-white",
+                  collapsed && "justify-center px-2"
+                )}
+              >
+                <UserPlus className="h-5 w-5" />
+                {!collapsed && <span className="ml-3">Register</span>}
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/login"
+                className={cn(
+                  "flex items-center rounded-md px-3 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100",
+                  location.pathname === "/login" && "bg-primary text-white",
+                  collapsed && "justify-center px-2"
+                )}
+              >
+                <LogIn className="h-5 w-5" />
+                {!collapsed && <span className="ml-3">Login</span>}
+              </Link>
+            </li>
           </ul>
         </nav>
       </div>
@@ -119,6 +155,7 @@ const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
           className={cn("w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50", 
             collapsed && "justify-center"
           )}
+          onClick={handleLogout}
         >
           <LogOut className="h-5 w-5" />
           {!collapsed && <span className="ml-2">Logout</span>}

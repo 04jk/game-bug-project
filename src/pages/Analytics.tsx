@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getStatistics } from '@/data/mockData';
+import { getStatistics } from '@/data/analytics/bugStatistics';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { BugStatus, BugSeverity } from '@/types/bug';
 
@@ -25,16 +24,8 @@ const Analytics = () => {
     value: count,
   }));
   
-  // Mock time-based data
-  const timeData = [
-    { date: '2023-01', New: 5, Fixed: 2 },
-    { date: '2023-02', New: 8, Fixed: 4 },
-    { date: '2023-03', New: 12, Fixed: 6 },
-    { date: '2023-04', New: 10, Fixed: 9 },
-    { date: '2023-05', New: 15, Fixed: 11 },
-    { date: '2023-06', New: 18, Fixed: 14 },
-    { date: '2023-07', New: 13, Fixed: 16 },
-  ];
+  // Use dynamic time data from stats
+  const timeData = stats.timeData;
   
   const COLORS = [
     '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', 
@@ -230,7 +221,7 @@ const Analytics = () => {
           <Card>
             <CardHeader>
               <CardTitle>Bug Trends Over Time</CardTitle>
-              <CardDescription>New vs Fixed bugs over the last 7 months</CardDescription>
+              <CardDescription>New vs Fixed bugs dynamically generated from bug data</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-96 w-full">
@@ -258,9 +249,9 @@ const Analytics = () => {
               <div className="p-4 border rounded-md mt-6">
                 <h3 className="font-medium mb-2">Insights</h3>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li>Bug reports have increased by 160% over the last 7 months</li>
-                  <li>Fix rate has improved by 700% from January to July</li>
-                  <li>The gap between new bugs and fixed bugs is narrowing</li>
+                  <li>Dynamic analysis of bug creation and resolution trends</li>
+                  <li>Data updates automatically as users report new bugs</li>
+                  <li>Shows developer performance through bug resolution rate</li>
                 </ul>
               </div>
             </CardContent>

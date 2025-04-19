@@ -20,6 +20,8 @@ import UserManagement from "./pages/admin/UserManagement";
 import RoleGuard from "./components/auth/RoleGuard";
 import { UserRole } from "./types/user";
 import ChatRoom from "./pages/ChatRoom";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
@@ -33,6 +35,11 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Auth Routes - Not inside layout */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              
+              {/* Main Dashboard */}
               <Route path="/" element={<Layout><Dashboard /></Layout>} />
               
               {/* Developer & Tester Routes */}
