@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
 import RoleGuard from '@/components/auth/RoleGuard';
 import { UserRole } from '@/types/user';
-import { Alert, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -24,13 +25,13 @@ const NewBug = () => {
   
   if (!can('create_bugs')) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
+      <div className="p-4 border border-red-300 bg-red-50 rounded-md flex items-start gap-2">
+        <AlertCircle className="h-4 w-4 mt-1 text-red-500" />
         <div>
           <h2 className="text-lg font-medium">Access Denied</h2>
           <p className="text-sm">Only Testers can create new bug reports.</p>
         </div>
-      </Alert>
+      </div>
     );
   }
   
@@ -111,13 +112,13 @@ export default () => (
     allowedRoles={[UserRole.TESTER, UserRole.ADMIN]} 
     fallback={
       <div className="p-4">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+        <div className="p-4 border border-red-300 bg-red-50 rounded-md flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 mt-1 text-red-500" />
           <div>
             <h2 className="text-lg font-medium">Access Denied</h2>
             <p className="text-sm">Only Testers can access this page.</p>
           </div>
-        </Alert>
+        </div>
       </div>
     }
   >
