@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import BugsList from "./pages/BugsList";
@@ -113,9 +113,12 @@ const App = () => {
               {/* Common Routes */}
               <Route path="/settings" element={<Layout><Settings /></Layout>} />
               <Route path="/about" element={<Layout><About /></Layout>} />
-              <Route path="/info" element={<InfoLayout>
+              
+              {/* Info Routes with proper nesting */}
+              <Route path="/info" element={<Layout><InfoLayout /></Layout>}>
                 <Route path="getting-started" element={<GettingStarted />} />
-              </InfoLayout>} />
+              </Route>
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
