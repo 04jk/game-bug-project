@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -26,6 +25,8 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { useRole } from '@/contexts/RoleContext';
+import { currentUser } from '@/data/generators/mockUsers';
 
 const profileFormSchema = z.object({
   username: z.string().min(2, {
@@ -35,8 +36,6 @@ const profileFormSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
-  role: z.string(),
-  team: z.string(),
 });
 
 const notificationsFormSchema = z.object({
@@ -56,14 +55,14 @@ const appearanceFormSchema = z.object({
 });
 
 const Settings = () => {
+  const { userRole } = useRole();
+  
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       username: "johnd",
-      email: "john@example.com",
-      name: "John Developer",
-      role: "Developer",
-      team: "Frontend Team",
+      email: currentUser.email,
+      name: currentUser.name,
     },
   });
   
@@ -122,7 +121,7 @@ const Settings = () => {
           <Card>
             <CardHeader>
               <CardTitle>Profile</CardTitle>
-              <CardDescription>Manage your personal information and role</CardDescription>
+              <CardDescription>Manage your personal information</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...profileForm}>
@@ -179,59 +178,16 @@ const Settings = () => {
                       )}
                     />
                     
-                    <FormField
-                      control={profileForm.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Role</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select role" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Developer">Developer</SelectItem>
-                              <SelectItem value="QA Tester">QA Tester</SelectItem>
-                              <SelectItem value="Manager">Manager</SelectItem>
-                              <SelectItem value="Designer">Designer</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Your role in the team.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={profileForm.control}
-                      name="team"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Team</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select team" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Frontend Team">Frontend Team</SelectItem>
-                              <SelectItem value="Backend Team">Backend Team</SelectItem>
-                              <SelectItem value="QA Team">QA Team</SelectItem>
-                              <SelectItem value="Design Team">Design Team</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            The team you're part of.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {/* Role as read-only display */}
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <div className="flex h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
+                        {userRole}
+                      </div>
+                      <FormDescription>
+                        Your role determines your permissions in the system.
+                      </FormDescription>
+                    </FormItem>
                   </div>
                   
                   <div className="flex justify-end">

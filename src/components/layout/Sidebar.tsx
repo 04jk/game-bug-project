@@ -2,8 +2,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Bug, ChevronLeft, Home, BarChart2, PlusSquare, Settings, LogOut } from 'lucide-react';
+import { Bug, ChevronLeft, Home, BarChart2, PlusSquare, Settings, LogOut, Users, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useRole } from '@/contexts/RoleContext';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -12,12 +13,41 @@ interface SidebarProps {
 
 const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
   const location = useLocation();
+  const { userRole, isAdmin, isProjectManager } = useRole();
   
-  const navItems = [
+  // Base navigation items for all users
+  const baseNavItems = [
     { path: '/', label: 'Dashboard', icon: <Home className="h-5 w-5" /> },
-    { path: '/bugs', label: 'Bug List', icon: <Bug className="h-5 w-5" /> },
-    { path: '/analytics', label: 'Analytics', icon: <BarChart2 className="h-5 w-5" /> },
-    { path: '/new-bug', label: 'Report Bug', icon: <PlusSquare className="h-5 w-5" /> },
+  ];
+  
+  // Role-specific items
+  const roleItems = {
+    Tester: [
+      { path: '/new-bug', label: 'Report Bug', icon: <PlusSquare className="h-5 w-5" /> },
+      { path: '/bugs', label: 'My Bugs', icon: <Bug className="h-5 w-5" /> },
+    ],
+    Developer: [
+      { path: '/bugs', label: 'Assigned Bugs', icon: <Bug className="h-5 w-5" /> },
+    ],
+    'Project Manager': [
+      { path: '/bugs', label: 'All Bugs', icon: <Bug className="h-5 w-5" /> },
+      { path: '/analytics', label: 'Analytics', icon: <BarChart2 className="h-5 w-5" /> },
+      { path: '/reports', label: 'Reports', icon: <FileText className="h-5 w-5" /> },
+    ],
+    Admin: [
+      { path: '/bugs', label: 'All Bugs', icon: <Bug className="h-5 w-5" /> },
+      { path: '/users', label: 'Users', icon: <Users className="h-5 w-5" /> },
+      { path: '/analytics', label: 'Analytics', icon: <BarChart2 className="h-5 w-5" /> },
+    ],
+  };
+  
+  // Get role-specific navigation items
+  const roleNavItems = roleItems[userRole] || [];
+  
+  // Settings is available to all users
+  const navItems = [
+    ...baseNavItems,
+    ...roleNavItems,
     { path: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
   ];
 
@@ -69,6 +99,14 @@ const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
           </ul>
         </nav>
       </div>
+
+      {/* Add role indicator */}
+      {!collapsed && (
+        <div className="px-4 py-2 border-t border-gray-200">
+          <div className="text-xs text-gray-500">Current Role</div>
+          <div className="font-medium text-sm">{userRole}</div>
+        </div>
+      )}
 
       <div className="p-4 border-t border-gray-200">
         <Button 
