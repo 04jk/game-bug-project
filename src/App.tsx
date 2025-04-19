@@ -11,6 +11,9 @@ import BugDetail from "./pages/BugDetail";
 import NewBug from "./pages/NewBug";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import About from "./pages/About";
+import InfoLayout from "./pages/info/InfoLayout";
+import GettingStarted from "./pages/info/GettingStarted";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +31,10 @@ const App = () => (
           <Route path="/new-bug" element={<Layout><NewBug /></Layout>} />
           <Route path="/analytics" element={<Layout><Analytics /></Layout>} />
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
+          <Route path="/about" element={<Layout><About /></Layout>} />
+          <Route path="/info" element={<InfoLayout>}>
+            <Route path="getting-started" element={<GettingStarted />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
