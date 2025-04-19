@@ -113,9 +113,9 @@ const App = () => {
               {/* Common Routes */}
               <Route path="/settings" element={<Layout><Settings /></Layout>} />
               <Route path="/about" element={<Layout><About /></Layout>} />
-              <Route path="/info" element={<InfoLayout>}>
+              <Route path="/info" element={<InfoLayout>
                 <Route path="getting-started" element={<GettingStarted />} />
-              </Route>
+              </InfoLayout>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
