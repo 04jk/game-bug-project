@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,16 +30,29 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Layout><Dashboard /></Layout>} />
-            <Route path="/bugs" element={<Layout><BugsList /></Layout>} />
+            
+            {/* Developer & Tester Routes */}
+            <Route 
+              path="/bugs" 
+              element={
+                <Layout>
+                  <RoleGuard 
+                    allowedRoles={[UserRole.DEVELOPER, UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN]}
+                  >
+                    <BugsList />
+                  </RoleGuard>
+                </Layout>
+              } 
+            />
             <Route path="/bug/:id" element={<Layout><BugDetail /></Layout>} />
             
-            {/* Role-specific routes */}
+            {/* Tester Only Routes */}
             <Route 
               path="/new-bug" 
               element={
                 <Layout>
                   <RoleGuard 
-                    allowedRoles={[UserRole.TESTER, UserRole.ADMIN]} 
+                    allowedRoles={[UserRole.TESTER, UserRole.ADMIN]}
                     fallback={<Navigate to="/" replace />}
                   >
                     <NewBug />
@@ -49,12 +61,13 @@ const App = () => (
               } 
             />
             
+            {/* Project Manager & Admin Routes */}
             <Route 
               path="/analytics" 
               element={
                 <Layout>
                   <RoleGuard 
-                    allowedRoles={[UserRole.PROJECT_MANAGER, UserRole.ADMIN]} 
+                    allowedRoles={[UserRole.PROJECT_MANAGER, UserRole.ADMIN]}
                     fallback={<Navigate to="/" replace />}
                   >
                     <Analytics />
@@ -63,13 +76,13 @@ const App = () => (
               } 
             />
             
-            {/* Admin routes */}
+            {/* Admin Only Routes */}
             <Route 
               path="/users" 
               element={
                 <Layout>
                   <RoleGuard 
-                    allowedRoles={[UserRole.ADMIN]} 
+                    allowedRoles={[UserRole.ADMIN]}
                     fallback={<Navigate to="/" replace />}
                   >
                     <UserManagement />
@@ -78,9 +91,10 @@ const App = () => (
               } 
             />
             
+            {/* Common Routes */}
             <Route path="/settings" element={<Layout><Settings /></Layout>} />
             <Route path="/about" element={<Layout><About /></Layout>} />
-            <Route path="/info" element={<InfoLayout />}>
+            <Route path="/info" element={<InfoLayout}>
               <Route path="getting-started" element={<GettingStarted />} />
             </Route>
             <Route path="*" element={<NotFound />} />

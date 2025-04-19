@@ -1,6 +1,9 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useRole } from '@/contexts/RoleContext';
+import RoleGuard from '@/components/auth/RoleGuard';
+import { UserRole } from '@/types/user';
+import { Alert, AlertCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -17,6 +20,19 @@ import { bugFormSchema, type BugFormData } from '@/schemas/bugFormSchema';
 
 const NewBug = () => {
   const navigate = useNavigate();
+  const { can } = useRole();
+  
+  if (!can('create_bugs')) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <div>
+          <h2 className="text-lg font-medium">Access Denied</h2>
+          <p className="text-sm">Only Testers can create new bug reports.</p>
+        </div>
+      </Alert>
+    );
+  }
   
   const form = useForm<BugFormData>({
     resolver: zodResolver(bugFormSchema),
@@ -32,8 +48,6 @@ const NewBug = () => {
   });
   
   const onSubmit = (values: BugFormData) => {
-    // Since the form validation ensures all fields are defined,
-    // we can safely pass them to addBug as non-optional values
     const newBug = addBug({
       title: values.title,
       description: values.description,
@@ -92,4 +106,21 @@ const NewBug = () => {
   );
 };
 
-export default NewBug;
+export default () => (
+  <RoleGuard 
+    allowedRoles={[UserRole.TESTER, UserRole.ADMIN]} 
+    fallback={
+      <div className="p-4">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <div>
+            <h2 className="text-lg font-medium">Access Denied</h2>
+            <p className="text-sm">Only Testers can access this page.</p>
+          </div>
+        </Alert>
+      </div>
+    }
+  >
+    <NewBug />
+  </RoleGuard>
+);
