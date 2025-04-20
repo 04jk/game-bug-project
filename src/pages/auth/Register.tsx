@@ -11,8 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { UserRole } from '@/types/user';
-import { registerUser } from '@/lib/supabase-connection';
 import { supabase } from "@/integrations/supabase/client";
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Form schema for registration
 const registerSchema = z.object({
@@ -29,6 +30,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Check for existing session on component mount
   useEffect(() => {
@@ -56,22 +58,47 @@ const Register = () => {
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
+    setAuthError(null);
     
     try {
-      const result = await registerUser(data.email, data.password, {
-        name: data.name,
-        role: data.role,
+      // Register the user with Supabase
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            role: data.role,
+          },
+        }
       });
       
-      if (result) {
-        toast.success("Registration successful! Please log in.");
-        navigate('/login');
-      } else {
-        toast.error("Registration failed. Please try again.");
+      if (error) {
+        setAuthError(error.message);
+        toast.error("Registration failed: " + error.message);
+      } else if (authData.user) {
+        // Create profile entry
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            name: data.name,
+            role: data.role
+          });
+          
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          toast.error("Account created but profile setup failed.");
+        } else {
+          toast.success("Registration successful! Please check your email to verify your account.");
+          toast.info("For development purposes, you can disable email verification in the Supabase dashboard.");
+          navigate('/login');
+        }
       }
     } catch (error) {
       console.error("Registration error:", error);
       const errorMessage = error instanceof Error ? error.message : "An error occurred during registration";
+      setAuthError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -89,6 +116,14 @@ const Register = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {authError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{authError}</AlertDescription>
+              </Alert>
+            )}
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField

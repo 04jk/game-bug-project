@@ -6,6 +6,7 @@ import { Bug, ChevronLeft, Home, BarChart2, PlusSquare, Settings, LogOut, Users,
 import { Button } from '@/components/ui/button';
 import { useRole } from '@/contexts/RoleContext';
 import { toast } from 'sonner';
+import { logoutUser } from '@/lib/supabase-connection';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -57,10 +58,11 @@ const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
     { path: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
   ];
 
-  const handleLogout = () => {
-    // In a real app with Supabase auth, would call supabase.auth.signOut()
-    toast.success("You have been logged out");
-    navigate('/login');
+  const handleLogout = async () => {
+    const success = await logoutUser();
+    if (success) {
+      navigate('/login');
+    }
   };
 
   return (

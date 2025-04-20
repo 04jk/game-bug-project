@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { loginUser } from '@/lib/supabase-connection';
 import { supabase } from "@/integrations/supabase/client";
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Form schema for login
 const loginSchema = z.object({
@@ -23,11 +25,12 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const Login = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Check for existing session on component mount
   useEffect(() => {
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
+      const { data, error } = await supabase.auth.getSession();
       if (data.session) {
         // User is already logged in, redirect to dashboard
         toast.info("You're already logged in");
@@ -48,18 +51,37 @@ const Login = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
+    setAuthError(null);
     
     try {
-      const result = await loginUser(data.email, data.password);
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
       
-      if (result) {
-        toast.success(`Welcome back, ${result.user?.email}!`);
+      if (error) {
+        setAuthError(error.message);
+        toast.error("Login failed: " + error.message);
+      } else if (authData.user) {
+        toast.success(`Welcome back, ${authData.user.email}!`);
+        
+        // Fetch user profile to get role
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('name, role')
+          .eq('id', authData.user.id)
+          .single();
+          
+        if (profileData) {
+          localStorage.setItem('userRole', profileData.role);
+          toast.success(`Logged in as ${profileData.name} (${profileData.role})`);
+        }
+        
         navigate('/');
-      } else {
-        toast.error("Login failed. Please check your credentials.");
       }
     } catch (error) {
       console.error("Login error:", error);
+      setAuthError("An unexpected error occurred during login.");
       toast.error("An error occurred during login. Please try again.");
     } finally {
       setIsLoading(false);
@@ -77,6 +99,14 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {authError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{authError}</AlertDescription>
+              </Alert>
+            )}
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField

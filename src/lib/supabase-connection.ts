@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "@/types/user";
+import { User, UserRole } from "@/types/user";
 import { toast } from "sonner";
 
 // This is a helper function to safely interact with Supabase
@@ -30,7 +30,7 @@ export const fetchUsersWithFallback = async (): Promise<User[]> => {
   }
 };
 
-// Helper for registering users with Supabase fallback
+// Helper for registering users with Supabase
 export const registerUser = async (email: string, password: string, userData: Partial<User>) => {
   try {
     // Try to use Supabase auth if available
@@ -46,6 +46,22 @@ export const registerUser = async (email: string, password: string, userData: Pa
       console.error("Supabase registration error:", error);
       toast.error("Registration failed: " + error.message);
       return null;
+    }
+    
+    if (data.user) {
+      // Create profile entry
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          name: userData.name,
+          role: userData.role
+        });
+        
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        toast.error("Account created but profile setup failed.");
+      }
     }
     
     return data;
@@ -72,6 +88,19 @@ export const loginUser = async (email: string, password: string) => {
       return null;
     }
     
+    if (data.user) {
+      // Fetch user profile to get role
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('name, role')
+        .eq('id', data.user.id)
+        .single();
+        
+      if (profileData) {
+        localStorage.setItem('userRole', profileData.role);
+      }
+    }
+    
     return data;
   } catch (error) {
     console.log("Using mock login flow");
@@ -79,12 +108,73 @@ export const loginUser = async (email: string, password: string) => {
     return import('@/data/generators/mockUsers').then(module => {
       const user = module.users.find(u => u.email === email);
       if (user) {
+        localStorage.setItem('userRole', user.role);
         toast.success(`Welcome back, ${user.name}! (Mock)`);
         return { user, session: { user } };
       } else {
         toast.error("Invalid email or password (Mock)");
         return null;
       }
+    });
+  }
+};
+
+// Helper for logging out
+export const logoutUser = async () => {
+  try {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      console.error("Logout error:", error);
+      toast.error("Logout failed: " + error.message);
+      return false;
+    }
+    
+    // Clear role from localStorage
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('profileSettings');
+    localStorage.removeItem('notificationSettings');
+    localStorage.removeItem('appearanceSettings');
+    
+    toast.success("You have been logged out");
+    return true;
+  } catch (error) {
+    console.log("Using mock logout flow");
+    // Mock logout
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('profileSettings');
+    localStorage.removeItem('notificationSettings');
+    localStorage.removeItem('appearanceSettings');
+    toast.success("You have been logged out (Mock)");
+    return true;
+  }
+};
+
+// Helper to get current user data
+export const getCurrentUser = async () => {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error || !data.session) {
+      return null;
+    }
+    
+    const { data: userData, error: userError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.session.user.id)
+      .single();
+      
+    if (userError || !userData) {
+      return null;
+    }
+    
+    return { ...userData, email: data.session.user.email };
+  } catch (error) {
+    console.log("Using mock user data");
+    // Return mock current user
+    return import('@/data/generators/mockUsers').then(module => {
+      return module.currentUser;
     });
   }
 };
