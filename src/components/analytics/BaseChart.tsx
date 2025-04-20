@@ -1,12 +1,12 @@
 
-import React from 'react';
+import React, { ReactElement } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ResponsiveContainer } from "recharts";
 
 interface BaseChartProps {
   title: string;
   description?: string;
-  children: React.ReactNode;
+  children: ReactElement;  // Change this from ReactNode to ReactElement
   data: Array<{
     name: string;
     value: number;
