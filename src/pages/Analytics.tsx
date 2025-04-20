@@ -1,9 +1,17 @@
+
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getStatistics } from '@/data/analytics/bugStatistics';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { BugStatus, BugSeverity } from '@/types/bug';
+import StatCard from '@/components/analytics/StatCard';
+import StatusChart from '@/components/analytics/StatusChart';
+import SeverityChart from '@/components/analytics/SeverityChart';
+import GameAreaChart from '@/components/analytics/GameAreaChart';
+import TimelineChart from '@/components/analytics/TimelineChart';
+
+const COLORS = [
+  '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', 
+  '#82ca9d', '#ffc658', '#a4de6c', '#d0ed57', '#83a6ed'
+];
 
 const Analytics = () => {
   const stats = getStatistics();
@@ -24,14 +32,6 @@ const Analytics = () => {
     value: count,
   }));
   
-  // Use dynamic time data from stats
-  const timeData = stats.timeData;
-  
-  const COLORS = [
-    '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', 
-    '#82ca9d', '#ffc658', '#a4de6c', '#d0ed57', '#83a6ed'
-  ];
-  
   return (
     <div className="space-y-6">
       <div>
@@ -40,50 +40,28 @@ const Analytics = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">Total Bugs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.totalBugs}</div>
-          </CardContent>
-        </Card>
+        <StatCard 
+          title="Total Bugs" 
+          value={stats.totalBugs} 
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">Open Bugs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.openBugs}</div>
-            <p className="text-sm text-gray-500">
-              {Math.round(stats.openBugs / stats.totalBugs * 100)}% of all bugs
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard 
+          title="Open Bugs" 
+          value={stats.openBugs} 
+          subtitle={`${Math.round(stats.openBugs / stats.totalBugs * 100)}% of all bugs`}
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">Fixed Bugs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.fixedBugs}</div>
-            <p className="text-sm text-gray-500">
-              {Math.round(stats.fixedBugs / stats.totalBugs * 100)}% of all bugs
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard 
+          title="Fixed Bugs" 
+          value={stats.fixedBugs} 
+          subtitle={`${Math.round(stats.fixedBugs / stats.totalBugs * 100)}% of all bugs`}
+        />
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-gray-500">Critical Bugs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.criticalBugs}</div>
-            <p className="text-sm text-gray-500">
-              {Math.round(stats.criticalBugs / stats.totalBugs * 100)}% of all bugs
-            </p>
-          </CardContent>
-        </Card>
+        <StatCard 
+          title="Critical Bugs" 
+          value={stats.criticalBugs} 
+          subtitle={`${Math.round(stats.criticalBugs / stats.totalBugs * 100)}% of all bugs`}
+        />
       </div>
       
       <Tabs defaultValue="status" className="w-full">
@@ -95,167 +73,19 @@ const Analytics = () => {
         </TabsList>
         
         <TabsContent value="status" className="pt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bugs by Status</CardTitle>
-              <CardDescription>Distribution of bugs across different statuses</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-96 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={true}
-                      outerRadius={120}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
-                    >
-                      {statusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4 mt-6">
-                {Object.entries(stats.byStatus).map(([status, count]) => (
-                  <div key={status} className="p-4 border rounded-md">
-                    <p className="text-sm text-gray-500">{status}</p>
-                    <p className="text-xl font-bold">{count}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <StatusChart data={statusData} colors={COLORS} />
         </TabsContent>
         
         <TabsContent value="severity" className="pt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bugs by Severity</CardTitle>
-              <CardDescription>Distribution of bugs across different severity levels</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-96 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={severityData}
-                    layout="vertical"
-                    margin={{
-                      top: 5,
-                      right: 30,
-                      left: 100,
-                      bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="value" fill="#9b87f5" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div className="grid grid-cols-4 gap-4 mt-6">
-                {Object.entries(stats.bySeverity).map(([severity, count]) => (
-                  <div key={severity} className="p-4 border rounded-md">
-                    <p className="text-sm text-gray-500">{severity}</p>
-                    <p className="text-xl font-bold">{count}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <SeverityChart data={severityData} />
         </TabsContent>
         
         <TabsContent value="gameArea" className="pt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bugs by Game Area</CardTitle>
-              <CardDescription>Distribution of bugs across different game areas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-96 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={gameAreaData}
-                    margin={{
-                      top: 5,
-                      right: 30,
-                      left: 20,
-                      bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="value" fill="#7E69AB" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div className="grid grid-cols-4 gap-4 mt-6">
-                {Object.entries(stats.byGameArea).map(([area, count]) => (
-                  <div key={area} className="p-4 border rounded-md">
-                    <p className="text-sm text-gray-500">{area}</p>
-                    <p className="text-xl font-bold">{count}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <GameAreaChart data={gameAreaData} />
         </TabsContent>
         
         <TabsContent value="timeline" className="pt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bug Trends Over Time</CardTitle>
-              <CardDescription>New vs Fixed bugs dynamically generated from bug data</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-96 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={timeData}
-                    margin={{
-                      top: 5,
-                      right: 30,
-                      left: 20,
-                      bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="New" stroke="#9b87f5" activeDot={{ r: 8 }} />
-                    <Line type="monotone" dataKey="Fixed" stroke="#82ca9d" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              
-              <div className="p-4 border rounded-md mt-6">
-                <h3 className="font-medium mb-2">Insights</h3>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Dynamic analysis of bug creation and resolution trends</li>
-                  <li>Data updates automatically as users report new bugs</li>
-                  <li>Shows developer performance through bug resolution rate</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
+          <TimelineChart data={stats.timeData} />
         </TabsContent>
       </Tabs>
     </div>
@@ -263,3 +93,4 @@ const Analytics = () => {
 };
 
 export default Analytics;
+
