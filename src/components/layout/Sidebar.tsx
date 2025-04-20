@@ -1,221 +1,89 @@
 
-import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-  BarChart3,
-  Bug,
-  FileQuestion,
-  Home,
-  MessageSquare,
-  Plus,
-  Settings,
-  Users,
-  Menu,
-  X,
-  ChevronRight,
-  LogOut,
-  Info,
-  HelpCircle,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useRole } from "@/contexts/RoleContext";
-import LogoutButton from "@/components/auth/LogoutButton";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { UserRole } from "@/types/user";
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { Bug, ChevronLeft, Home, BarChart2, PlusSquare, Settings, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface SidebarProps {
+  collapsed: boolean;
+  toggleCollapse: () => void;
+}
 
-export default function Sidebar({ className }: SidebarProps) {
-  const [open, setOpen] = useState(false);
+const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { userRole, isAdmin, isProjectManager, isDeveloper, isTester, can } = useRole();
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("Logout error:", error);
-        toast.error("Logout failed: " + error.message);
-      } else {
-        // Clear role from localStorage
-        localStorage.removeItem('userRole');
-        toast.success("You have been logged out");
-        navigate('/login');
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.error("An error occurred during logout");
-    }
-  };
-
-  const items = [
-    {
-      title: "Dashboard",
-      icon: Home,
-      link: "/",
-      roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.DEVELOPER, UserRole.TESTER],
-    },
-    {
-      title: "Bug List",
-      icon: Bug,
-      link: "/bugs",
-      roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.DEVELOPER, UserRole.TESTER],
-    },
-    {
-      title: "Create Bug",
-      icon: Plus,
-      link: "/new-bug",
-      roles: [UserRole.ADMIN, UserRole.TESTER],
-    },
-    {
-      title: "Analytics",
-      icon: BarChart3,
-      link: "/analytics",
-      roles: [UserRole.ADMIN, UserRole.PROJECT_MANAGER],
-    },
-    {
-      title: "Chat Room",
-      icon: MessageSquare,
-      link: "/chat",
-      roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.TESTER],
-    },
-    {
-      title: "User Management",
-      icon: Users,
-      link: "/users",
-      roles: [UserRole.ADMIN],
-    },
+  
+  const navItems = [
+    { path: '/', label: 'Dashboard', icon: <Home className="h-5 w-5" /> },
+    { path: '/bugs', label: 'Bug List', icon: <Bug className="h-5 w-5" /> },
+    { path: '/analytics', label: 'Analytics', icon: <BarChart2 className="h-5 w-5" /> },
+    { path: '/new-bug', label: 'Report Bug', icon: <PlusSquare className="h-5 w-5" /> },
+    { path: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
   ];
 
-  const DashboardLink = ({
-    title,
-    icon: Icon,
-    link,
-    active,
-  }: {
-    title: string;
-    icon: any;
-    link: string;
-    active: boolean;
-  }) => {
-    return (
-      <Link
-        to={link}
-        onClick={() => setOpen(false)}
-        className={cn(
-          "flex items-center gap-2 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50",
-          active && "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50"
+  return (
+    <div 
+      className={cn(
+        "h-screen bg-white shadow-sm border-r border-gray-200 flex flex-col transition-all duration-300",
+        collapsed ? "w-16" : "w-64"
+      )}
+    >
+      <div className="flex items-center p-4 border-b border-gray-200 h-16">
+        {!collapsed && (
+          <div className="flex items-center gap-2 flex-1">
+            <Bug className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-bold">BugSquasher</h1>
+          </div>
         )}
-      >
-        <Icon className="h-5 w-5" />
-        <span>{title}</span>
-        {active && <ChevronRight className="ml-auto h-4 w-4" />}
-      </Link>
-    );
-  };
+        {collapsed && <Bug className="h-6 w-6 text-primary mx-auto" />}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleCollapse} 
+          className={collapsed ? "mx-auto" : ""}
+        >
+          <ChevronLeft className={cn("h-5 w-5 transition-transform", collapsed && "rotate-180")} />
+        </Button>
+      </div>
 
-  const Sidebar = (
-    <div className={cn("pb-12", className)}>
-      <div className="space-y-4 py-4">
-        <div className="px-4 py-2">
-          <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
-            Bug Tracking System
-          </h2>
-          <div className="flex items-center justify-between">
-            <div className="rounded-lg bg-gray-100 px-2 py-1 text-xs dark:bg-gray-800">
-              Role: {userRole}
-            </div>
-            <LogoutButton />
-          </div>
-        </div>
-        <div className="px-3">
-          <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-gray-500">
-            Main
-          </h2>
-          <div className="space-y-1">
-            {items
-              .filter((item) => item.roles.includes(userRole as UserRole))
-              .map((item) => (
-                <DashboardLink
-                  key={item.title}
-                  title={item.title}
-                  icon={item.icon}
-                  link={item.link}
-                  active={isActive(item.link)}
-                />
-              ))}
-          </div>
-        </div>
-        <div className="px-3">
-          <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-gray-500">
-            Settings
-          </h2>
-          <div className="space-y-1">
-            <DashboardLink
-              title="Settings"
-              icon={Settings}
-              link="/settings"
-              active={isActive("/settings")}
-            />
-            <DashboardLink
-              title="About"
-              icon={Info}
-              link="/about"
-              active={isActive("/about")}
-            />
-            <DashboardLink
-              title="FAQ"
-              icon={HelpCircle}
-              link="/faq"
-              active={isActive("/faq")}
-            />
-            <DashboardLink
-              title="Help & Support"
-              icon={FileQuestion}
-              link="/info/getting-started"
-              active={isActive("/info/getting-started")}
-            />
-          </div>
-        </div>
+      <div className="flex-1 py-6">
+        <nav>
+          <ul className="space-y-1 px-2">
+            {navItems.map((item) => (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  className={cn(
+                    "flex items-center rounded-md px-3 py-2 text-sm transition-colors",
+                    location.pathname === item.path 
+                      ? "bg-primary text-white" 
+                      : "text-gray-700 hover:bg-gray-100",
+                    collapsed && "justify-center px-2"
+                  )}
+                >
+                  {item.icon}
+                  {!collapsed && <span className="ml-3">{item.label}</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+
+      <div className="p-4 border-t border-gray-200">
+        <Button 
+          variant="ghost" 
+          size={collapsed ? "icon" : "default"} 
+          className={cn("w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50", 
+            collapsed && "justify-center"
+          )}
+        >
+          <LogOut className="h-5 w-5" />
+          {!collapsed && <span className="ml-2">Logout</span>}
+        </Button>
       </div>
     </div>
   );
+};
 
-  return (
-    <>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="md:hidden fixed left-4 top-4 z-50"
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle Menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="p-0">
-          <ScrollArea className="h-full">
-            {Sidebar}
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
-      <aside className="hidden border-r bg-gray-50/40 md:flex md:w-64 md:flex-col">
-        <ScrollArea className="flex-grow">
-          {Sidebar}
-        </ScrollArea>
-      </aside>
-    </>
-  );
-}
+export default Sidebar;

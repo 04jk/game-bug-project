@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getFilteredBugs, getFilterOptions } from '@/data/mockData';
@@ -17,8 +18,8 @@ const BugsList = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [statusFilter, setStatusFilter] = useState<BugStatus[]>([]);
   const [severityFilter, setSeverityFilter] = useState<BugSeverity[]>([]);
-  const [platformFilter, setPlatformFilter] = useState<string>('all');
-  const [gameAreaFilter, setGameAreaFilter] = useState<string>('all');
+  const [platformFilter, setPlatformFilter] = useState<string>('');
+  const [gameAreaFilter, setGameAreaFilter] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   
   const { platforms, gameAreas } = getFilterOptions();
@@ -29,8 +30,8 @@ const BugsList = () => {
         search: search,
         status: statusFilter.length > 0 ? statusFilter : undefined,
         severity: severityFilter.length > 0 ? severityFilter : undefined,
-        platform: platformFilter !== 'all' ? platformFilter : undefined,
-        gameArea: gameAreaFilter !== 'all' ? gameAreaFilter : undefined,
+        platform: platformFilter || undefined,
+        gameArea: gameAreaFilter || undefined,
       },
       { field: sortField, direction: sortDirection }
     );
@@ -62,8 +63,8 @@ const BugsList = () => {
     setSearch('');
     setStatusFilter([]);
     setSeverityFilter([]);
-    setPlatformFilter('all');
-    setGameAreaFilter('all');
+    setPlatformFilter('');
+    setGameAreaFilter('');
   };
   
   return (
@@ -98,7 +99,7 @@ const BugsList = () => {
           <FilterIcon className="mr-2 h-4 w-4" />
           Filters
           <span className="ml-2 rounded-full bg-primary w-5 h-5 flex items-center justify-center text-white text-xs">
-            {statusFilter.length + severityFilter.length + (platformFilter !== 'all' ? 1 : 0) + (gameAreaFilter !== 'all' ? 1 : 0)}
+            {statusFilter.length + severityFilter.length + (platformFilter ? 1 : 0) + (gameAreaFilter ? 1 : 0)}
           </span>
         </Button>
       </div>
@@ -150,7 +151,7 @@ const BugsList = () => {
                     <SelectValue placeholder="All Platforms" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Platforms</SelectItem>
+                    <SelectItem value="">All Platforms</SelectItem>
                     {platforms.map(platform => (
                       <SelectItem key={platform} value={platform}>{platform}</SelectItem>
                     ))}
@@ -165,7 +166,7 @@ const BugsList = () => {
                     <SelectValue placeholder="All Areas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Areas</SelectItem>
+                    <SelectItem value="">All Areas</SelectItem>
                     {gameAreas.map(area => (
                       <SelectItem key={area} value={area}>{area}</SelectItem>
                     ))}

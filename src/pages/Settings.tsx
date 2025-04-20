@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+
+import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -25,28 +26,19 @@ import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { useRole } from '@/contexts/RoleContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
-import { Tables } from '@/types/database.types';
 
-// Profile form schema
 const profileFormSchema = z.object({
   username: z.string().min(2, {
     message: "Username must be at least 2 characters.",
-  }).optional(),
-  email: z.string().email().optional(),
+  }),
+  email: z.string().email(),
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
-  avatar: z.string().optional(),
-  bio: z.string().max(500, {
-    message: "Bio must not exceed 500 characters."
-  }).optional(),
+  role: z.string(),
+  team: z.string(),
 });
 
-// Notifications form schema
 const notificationsFormSchema = z.object({
   emailNotifications: z.boolean(),
   pushNotifications: z.boolean(),
@@ -56,7 +48,6 @@ const notificationsFormSchema = z.object({
   assignmentNotifications: z.boolean(),
 });
 
-// Appearance form schema
 const appearanceFormSchema = z.object({
   theme: z.enum(["light", "dark", "system"]),
   bugsPerPage: z.enum(["10", "25", "50", "100"]),
@@ -64,32 +55,15 @@ const appearanceFormSchema = z.object({
   dateFormat: z.enum(["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]),
 });
 
-// Security form schema
-const securityFormSchema = z.object({
-  currentPassword: z.string().min(1, { message: "Current password is required" }),
-  newPassword: z.string().min(6, { message: "New password must be at least 6 characters" }),
-  confirmPassword: z.string().min(6, { message: "Confirm password must be at least 6 characters" }),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
-
 const Settings = () => {
-  const { userRole, user } = useRole();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [profileData, setProfileData] = useState<any>(null);
-  const [updating, setUpdating] = useState(false);
-  
-  // Initialize forms
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      username: "",
-      email: "",
-      name: "",
-      avatar: "",
-      bio: "",
+      username: "johnd",
+      email: "john@example.com",
+      name: "John Developer",
+      role: "Developer",
+      team: "Frontend Team",
     },
   });
   
@@ -115,205 +89,20 @@ const Settings = () => {
     },
   });
   
-  const securityForm = useForm<z.infer<typeof securityFormSchema>>({
-    resolver: zodResolver(securityFormSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
-  
-  // Load user profile and settings when component mounts
-  useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        setLoading(true);
-        
-        // Check if user is authenticated
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData.session) {
-          toast.error("You must be logged in to access settings");
-          navigate('/login');
-          return;
-        }
-        
-        // Load user profile from Supabase
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', sessionData.session.user.id)
-          .single() as { data: Tables['profiles']['Row'] | null, error: any };
-          
-        if (userError) {
-          console.error("Error fetching profile:", userError);
-          toast.error("Failed to load profile data");
-          return;
-        }
-        
-        if (userData) {
-          setProfileData(userData);
-          
-          // Set profile form data
-          profileForm.reset({
-            username: userData.username || "",
-            email: sessionData.session.user.email || "",
-            name: userData.name || "",
-            avatar: userData.avatar || "",
-            bio: userData.bio || "",
-          });
-        }
-        
-        // Load notification settings from localStorage
-        const savedNotificationSettings = localStorage.getItem('notificationSettings');
-        if (savedNotificationSettings) {
-          const parsedSettings = JSON.parse(savedNotificationSettings);
-          notificationsForm.reset(parsedSettings);
-        }
-        
-        // Load appearance settings from localStorage
-        const savedAppearanceSettings = localStorage.getItem('appearanceSettings');
-        if (savedAppearanceSettings) {
-          const parsedSettings = JSON.parse(savedAppearanceSettings);
-          appearanceForm.reset(parsedSettings);
-          
-          // Apply theme immediately
-          applyTheme(parsedSettings.theme);
-        }
-      } catch (error) {
-        console.error("Error loading user data:", error);
-        toast.error("Failed to load user settings");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadUserData();
-  }, [navigate, profileForm, notificationsForm, appearanceForm, user]);
-  
-  // Apply theme function
-  const applyTheme = (theme: string) => {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else if (theme === 'light') {
-      root.classList.remove('dark');
-    } else if (theme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        root.classList.add('dark');
-      } else {
-        root.classList.remove('dark');
-      }
-    }
-  };
-  
-  // Handle form submissions
-  const onProfileSubmit = async (data: z.infer<typeof profileFormSchema>) => {
-    try {
-      setUpdating(true);
-      
-      // Update user profile in Supabase
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData.session) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            name: data.name,
-            username: data.username,
-            bio: data.bio,
-            avatar: data.avatar,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', sessionData.session.user.id) as { error: any };
-          
-        if (error) throw error;
-      }
-      
-      // Save to localStorage as backup
-      localStorage.setItem('profileSettings', JSON.stringify(data));
-      
-      toast.success("Profile updated successfully!");
-    } catch (error) {
-      console.error("Error saving profile:", error);
-      toast.error("Failed to update profile");
-    } finally {
-      setUpdating(false);
-    }
+  const onProfileSubmit = (data: z.infer<typeof profileFormSchema>) => {
+    toast.success("Profile updated successfully!");
+    console.log("Profile data:", data);
   };
   
   const onNotificationsSubmit = (data: z.infer<typeof notificationsFormSchema>) => {
-    try {
-      // Save to localStorage
-      localStorage.setItem('notificationSettings', JSON.stringify(data));
-      
-      // In a real app, we'd save these to the user's profile or a dedicated settings table
-      
-      toast.success("Notification settings updated!");
-    } catch (error) {
-      console.error("Error saving notification settings:", error);
-      toast.error("Failed to update notification settings");
-    }
+    toast.success("Notification settings updated!");
+    console.log("Notifications data:", data);
   };
   
   const onAppearanceSubmit = (data: z.infer<typeof appearanceFormSchema>) => {
-    try {
-      // Save to localStorage
-      localStorage.setItem('appearanceSettings', JSON.stringify(data));
-      
-      // Apply theme immediately
-      applyTheme(data.theme);
-      
-      toast.success("Appearance settings updated!");
-    } catch (error) {
-      console.error("Error saving appearance settings:", error);
-      toast.error("Failed to update appearance settings");
-    }
+    toast.success("Appearance settings updated!");
+    console.log("Appearance data:", data);
   };
-  
-  const onSecuritySubmit = async (data: z.infer<typeof securityFormSchema>) => {
-    try {
-      setUpdating(true);
-      
-      // First, verify current password
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        toast.error("You must be logged in to change your password");
-        return;
-      }
-      
-      // Update password with Supabase
-      const { error } = await supabase.auth.updateUser({
-        password: data.newPassword,
-      });
-      
-      if (error) {
-        toast.error("Password update failed: " + error.message);
-        return;
-      }
-      
-      toast.success("Password updated successfully!");
-      securityForm.reset({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-    } catch (error) {
-      console.error("Error updating password:", error);
-      toast.error("Failed to update password");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[70vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading settings...</span>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -323,18 +112,17 @@ const Settings = () => {
       </div>
       
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid grid-cols-4 max-w-md mb-4">
+        <TabsList className="grid grid-cols-3 max-w-md mb-4">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">
           <Card>
             <CardHeader>
               <CardTitle>Profile</CardTitle>
-              <CardDescription>Manage your personal information</CardDescription>
+              <CardDescription>Manage your personal information and role</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...profileForm}>
@@ -364,10 +152,10 @@ const Settings = () => {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="john@example.com" {...field} readOnly disabled />
+                            <Input placeholder="john@example.com" {...field} />
                           </FormControl>
                           <FormDescription>
-                            Your email address for notifications. Contact support to change.
+                            Your email address for notifications.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -379,7 +167,7 @@ const Settings = () => {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name</FormLabel>
+                          <FormLabel>Name</FormLabel>
                           <FormControl>
                             <Input placeholder="John Doe" {...field} />
                           </FormControl>
@@ -393,47 +181,52 @@ const Settings = () => {
                     
                     <FormField
                       control={profileForm.control}
-                      name="avatar"
+                      name="role"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Avatar URL</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://example.com/avatar.jpg" {...field} />
-                          </FormControl>
+                          <FormLabel>Role</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Developer">Developer</SelectItem>
+                              <SelectItem value="QA Tester">QA Tester</SelectItem>
+                              <SelectItem value="Manager">Manager</SelectItem>
+                              <SelectItem value="Designer">Designer</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormDescription>
-                            URL to your profile picture.
+                            Your role in the team.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     
-                    {/* Role as read-only display */}
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Role</FormLabel>
-                      <div className="flex h-10 w-full rounded-md border border-input bg-gray-100 px-3 py-2 text-sm">
-                        {userRole}
-                      </div>
-                      <FormDescription>
-                        Your role determines your permissions in the system.
-                      </FormDescription>
-                    </FormItem>
-                    
                     <FormField
                       control={profileForm.control}
-                      name="bio"
+                      name="team"
                       render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Bio</FormLabel>
-                          <FormControl>
-                            <textarea 
-                              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none min-h-[100px]" 
-                              placeholder="Tell us about yourself" 
-                              {...field} 
-                            />
-                          </FormControl>
+                        <FormItem>
+                          <FormLabel>Team</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select team" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Frontend Team">Frontend Team</SelectItem>
+                              <SelectItem value="Backend Team">Backend Team</SelectItem>
+                              <SelectItem value="QA Team">QA Team</SelectItem>
+                              <SelectItem value="Design Team">Design Team</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormDescription>
-                            A brief description about yourself.
+                            The team you're part of.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -442,16 +235,7 @@ const Settings = () => {
                   </div>
                   
                   <div className="flex justify-end">
-                    <Button type="submit" disabled={updating}>
-                      {updating ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save Profile"
-                      )}
-                    </Button>
+                    <Button type="submit">Save Profile</Button>
                   </div>
                 </form>
               </Form>
@@ -732,117 +516,6 @@ const Settings = () => {
                   </div>
                 </form>
               </Form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security</CardTitle>
-              <CardDescription>Manage your security settings and password</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...securityForm}>
-                <form onSubmit={securityForm.handleSubmit(onSecuritySubmit)} className="space-y-6">
-                  <div className="space-y-4">
-                    <FormField
-                      control={securityForm.control}
-                      name="currentPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Current Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="Enter current password" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={securityForm.control}
-                      name="newPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>New Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="Enter new password" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                            Password must be at least 6 characters.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={securityForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirm New Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="Confirm new password" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <Button type="submit" disabled={updating}>
-                      {updating ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Updating...
-                        </>
-                      ) : (
-                        "Update Password"
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-              
-              <Separator className="my-6" />
-              
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Two-Factor Authentication</h3>
-                <p className="text-sm text-gray-500">
-                  Enhance your account security by enabling two-factor authentication.
-                </p>
-                <Button variant="outline">Set Up Two-Factor Authentication</Button>
-              </div>
-              
-              <Separator className="my-6" />
-              
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Connected Devices</h3>
-                <p className="text-sm text-gray-500">
-                  Manage devices that are currently logged into your account.
-                </p>
-                <Button variant="outline">Manage Devices</Button>
-              </div>
-              
-              <Separator className="my-6" />
-              
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-destructive">Danger Zone</h3>
-                <p className="text-sm text-gray-500">
-                  These actions are irreversible. Please proceed with caution.
-                </p>
-                <div className="flex flex-col space-y-2">
-                  <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive hover:text-white">
-                    Reset Account
-                  </Button>
-                  <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive hover:text-white">
-                    Delete Account
-                  </Button>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
