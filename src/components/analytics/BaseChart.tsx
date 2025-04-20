@@ -41,7 +41,7 @@ const BaseChart = ({
         {/* Optional data summary grid */}
         {additionalContent ? (
           additionalContent
-        ) : data && 'name' in data[0] && 'value' in data[0] ? (
+        ) : data && data[0] && 'name' in data[0] && 'value' in data[0] ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
             {data.map(({ name, value }) => (
               <div key={name} className="p-4 border rounded-md">
