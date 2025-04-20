@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { users } from '@/data/generators/mockUsers';
+import { loginUser } from '@/lib/supabase-connection';
+import { supabase } from "@/integrations/supabase/client";
 
 // Form schema for login
 const loginSchema = z.object({
@@ -23,6 +24,20 @@ const Login = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check for existing session on component mount
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        // User is already logged in, redirect to dashboard
+        toast.info("You're already logged in");
+        navigate('/');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
+
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -31,25 +46,24 @@ const Login = () => {
     }
   });
 
-  const onSubmit = (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     
-    // Simulate login process
-    setTimeout(() => {
-      // Find user with matching email (in a real app, would check password too)
-      const user = users.find(user => user.email === data.email);
+    try {
+      const result = await loginUser(data.email, data.password);
       
-      if (!user) {
-        toast.error("Invalid email or password");
-        setIsLoading(false);
-        return;
+      if (result) {
+        toast.success(`Welcome back, ${result.user?.email}!`);
+        navigate('/');
+      } else {
+        toast.error("Login failed. Please check your credentials.");
       }
-      
-      // In a real app, this would set the session in Supabase
-      // For now, we'll just simulate success
-      toast.success(`Welcome back, ${user.name}!`);
-      navigate('/');
-    }, 1500);
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("An error occurred during login. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

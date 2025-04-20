@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { UserRole } from '@/types/user';
-import { users, currentUser } from '@/data/generators/mockUsers';
+import { registerUser } from '@/lib/supabase-connection';
+import { supabase } from "@/integrations/supabase/client";
 
 // Form schema for registration
 const registerSchema = z.object({
@@ -29,6 +30,20 @@ const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check for existing session on component mount
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        // User is already logged in, redirect to dashboard
+        toast.info("You're already logged in");
+        navigate('/');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
+
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -39,25 +54,28 @@ const Register = () => {
     }
   });
 
-  const onSubmit = (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     
-    // Simulate registration process
-    setTimeout(() => {
-      // Check if email already exists
-      const emailExists = users.some(user => user.email === data.email);
+    try {
+      const result = await registerUser(data.email, data.password, {
+        name: data.name,
+        role: data.role,
+      });
       
-      if (emailExists) {
-        toast.error("A user with that email already exists");
-        setIsLoading(false);
-        return;
+      if (result) {
+        toast.success("Registration successful! Please log in.");
+        navigate('/login');
+      } else {
+        toast.error("Registration failed. Please try again.");
       }
-      
-      // In a real app, this would create a user in Supabase
-      // For now, we'll just simulate success
-      toast.success("Registration successful! Please log in.");
-      navigate('/login');
-    }, 1500);
+    } catch (error) {
+      console.error("Registration error:", error);
+      const errorMessage = error instanceof Error ? error.message : "An error occurred during registration";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

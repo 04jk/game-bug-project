@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Bug, ChevronLeft, Home, BarChart2, PlusSquare, Settings, LogOut, Users, FileText, MessageSquare, Search, UserPlus, LogIn } from 'lucide-react';
+import { Bug, ChevronLeft, Home, BarChart2, PlusSquare, Settings, LogOut, Users, FileText, MessageSquare, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRole } from '@/contexts/RoleContext';
 import { toast } from 'sonner';
@@ -108,34 +108,6 @@ const Sidebar = ({ collapsed, toggleCollapse }: SidebarProps) => {
                 </Link>
               </li>
             ))}
-            
-            {/* Auth links */}
-            <li>
-              <Link
-                to="/register"
-                className={cn(
-                  "flex items-center rounded-md px-3 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100",
-                  location.pathname === "/register" && "bg-primary text-white",
-                  collapsed && "justify-center px-2"
-                )}
-              >
-                <UserPlus className="h-5 w-5" />
-                {!collapsed && <span className="ml-3">Register</span>}
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/login"
-                className={cn(
-                  "flex items-center rounded-md px-3 py-2 text-sm transition-colors text-gray-700 hover:bg-gray-100",
-                  location.pathname === "/login" && "bg-primary text-white",
-                  collapsed && "justify-center px-2"
-                )}
-              >
-                <LogIn className="h-5 w-5" />
-                {!collapsed && <span className="ml-3">Login</span>}
-              </Link>
-            </li>
           </ul>
         </nav>
       </div>
