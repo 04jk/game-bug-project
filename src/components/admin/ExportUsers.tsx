@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Download, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { User } from '@/types/user';
+import { User, UserRole } from '@/types/user';
 
 interface ExportOption {
   id: string;
@@ -56,7 +56,7 @@ const ExportUsers = () => {
       }
       
       // Get the auth.users data for emails (admin only)
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) {
         console.error("Error fetching auth users:", authError);
@@ -67,9 +67,9 @@ const ExportUsers = () => {
       let users: any[] = profiles || [];
       
       // If we have auth users data, merge it with profiles
-      if (authUsers) {
+      if (authData) {
         users = users.map(profile => {
-          const authUser = authUsers.users.find(u => u.id === profile.id);
+          const authUser = authData.users.find(u => u.id === profile.id);
           return {
             ...profile,
             email: authUser?.email || 'N/A',
