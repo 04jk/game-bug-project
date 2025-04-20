@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -30,6 +29,7 @@ import { useRole } from '@/contexts/RoleContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { Tables } from '@/types/database.types';
 
 // Profile form schema
 const profileFormSchema = z.object({
@@ -143,7 +143,7 @@ const Settings = () => {
           .from('profiles')
           .select('*')
           .eq('id', sessionData.session.user.id)
-          .single();
+          .single() as { data: Tables['profiles']['Row'] | null, error: any };
           
         if (userError) {
           console.error("Error fetching profile:", userError);
@@ -225,7 +225,7 @@ const Settings = () => {
             avatar: data.avatar,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', sessionData.session.user.id);
+          .eq('id', sessionData.session.user.id) as { error: any };
           
         if (error) throw error;
       }

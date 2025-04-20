@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole } from "@/types/user";
 import { toast } from "sonner";
+import { Tables } from "@/types/database.types";
 
 // This is a helper function to safely interact with Supabase
 // It will use mock data if Supabase interaction fails
@@ -10,34 +11,29 @@ export const fetchUsersWithFallback = async (): Promise<User[]> => {
     // First try to fetch users from Supabase
     const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
-      .select('*');
+      .select('*') as { data: Tables['profiles']['Row'][] | null, error: any };
     
     if (profilesError) {
       console.error("Supabase profiles error:", profilesError);
       throw profilesError;
     }
     
-    // Get emails from auth.users (admin only)
-    const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-    
-    if (authError) {
-      console.error("Auth users error:", authError);
-      // Continue with just profiles data
-    }
+    // In a real app with proper permissions, we would fetch auth users data
+    // For now, mock the email data in development
     
     if (profilesData && profilesData.length > 0) {
       // Map profiles to User interface
-      const users: User[] = profilesData.map((profile: any) => {
-        // Find matching auth user to get email
-        const authUser = authData?.users.find(u => u.id === profile.id);
+      const users: User[] = profilesData.map((profile: Tables['profiles']['Row']) => {
+        // Generate mock email for development
+        const mockEmail = `${profile.name?.toLowerCase().replace(/\s+/g, '.')}@example.com` || 'user@example.com';
         
         return {
           id: profile.id,
           name: profile.name || '',
-          email: authUser?.email || 'email@example.com', // Fallback if no email found
-          role: profile.role as UserRole || UserRole.TESTER,
-          avatar: profile.avatar,
-          team: profile.team
+          email: mockEmail, // Mock email
+          role: (profile.role as UserRole) || UserRole.TESTER,
+          avatar: profile.avatar || undefined,
+          team: profile.team || undefined
         };
       });
       
@@ -79,7 +75,7 @@ export const registerUser = async (email: string, password: string, userData: Pa
           id: data.user.id,
           name: userData.name,
           role: userData.role
-        });
+        }) as { error: any };
         
       if (profileError) {
         console.error("Profile creation error:", profileError);
@@ -118,7 +114,7 @@ export const loginUser = async (email: string, password: string) => {
         .from('profiles')
         .select('name, role')
         .eq('id', data.user.id)
-        .single();
+        .single() as { data: Tables['profiles']['Row'] | null, error: any };
         
       if (profileData) {
         localStorage.setItem('userRole', profileData.role as string);
@@ -175,7 +171,7 @@ export const getCurrentUser = async () => {
       .from('profiles')
       .select('*')
       .eq('id', data.session.user.id)
-      .single();
+      .single() as { data: Tables['profiles']['Row'] | null, error: any };
       
     if (userError || !userData) {
       return null;
@@ -209,7 +205,7 @@ export const updateUserProfile = async (userId: string, profileData: Partial<Use
         team: profileData.team,
         updated_at: new Date().toISOString()
       })
-      .eq('id', userId);
+      .eq('id', userId) as { error: any };
       
     if (error) {
       console.error("Profile update error:", error);

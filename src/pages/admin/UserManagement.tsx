@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -61,6 +60,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { fetchUsersWithFallback } from "@/lib/supabase-connection";
 import ExportUsers from "@/components/admin/ExportUsers";
+import { Tables } from "@/types/database.types";
 
 const userSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -177,7 +177,7 @@ export default function UserManagement() {
             id: userData.user.id,
             name: data.name,
             role: data.role,
-          });
+          }) as { error: any };
 
         if (profileError) {
           toast.error("User created but profile setup failed");

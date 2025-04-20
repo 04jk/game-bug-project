@@ -4,6 +4,7 @@ import { UserRole } from '@/types/user';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User, Session } from '@supabase/supabase-js';
+import { Tables } from '@/types/database.types';
 
 interface RoleContextType {
   userRole: UserRole;
@@ -91,19 +92,19 @@ export const RoleProvider = ({ children }: { children: ReactNode }) => {
     const setRoleFromProfile = async (userId: string) => {
       try {
         // Fetch user profile from Supabase
-        const { data: profileData, error } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('role')
           .eq('id', userId)
-          .single();
+          .single() as { data: Tables['profiles']['Row'] | null, error: any };
           
         if (error) {
           console.error("Error fetching profile:", error);
           return;
         }
         
-        if (profileData && profileData.role) {
-          const roleValue = profileData.role as UserRole;
+        if (data && data.role) {
+          const roleValue = data.role as UserRole;
           setUserRole(roleValue);
           localStorage.setItem('userRole', roleValue);
         }
