@@ -1,5 +1,5 @@
 
-import { BugStatus, BugSeverity } from "../../types/bug";
+import { BugStatus, BugSeverity, Bug } from "../../types/bug";
 import { mockBugs } from "../store/bugStore";
 
 export const getStatistics = () => {
@@ -41,7 +41,7 @@ export const getStatistics = () => {
 };
 
 // Generate dynamic timeline data based on actual bugs
-const generateTimelineData = (bugs) => {
+const generateTimelineData = (bugs: Bug[]) => {
   // Get all unique months from bug created and updated dates
   const allDates = bugs.flatMap(bug => {
     const dates = [];
@@ -80,7 +80,10 @@ const generateTimelineData = (bugs) => {
   
   // Create timeline data
   return uniqueMonths.map(monthStr => {
-    const [year, month] = monthStr.split('-').map(Number);
+    // Type assertion to let TS know this is a string
+    const monthParts = monthStr.split('-');
+    const year = parseInt(monthParts[0]);
+    const month = parseInt(monthParts[1]);
     
     // Count new bugs created this month
     const newBugs = bugs.filter(bug => {
