@@ -1,12 +1,8 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getStatistics } from '@/data/analytics/bugStatistics';
-import StatCard from '@/components/analytics/StatCard';
-import StatusChart from '@/components/analytics/StatusChart';
-import SeverityChart from '@/components/analytics/SeverityChart';
-import GameAreaChart from '@/components/analytics/GameAreaChart';
-import TimelineChart from '@/components/analytics/TimelineChart';
+import StatsOverview from '@/components/analytics/StatsOverview';
+import ChartTabs from '@/components/analytics/ChartTabs';
 
 const COLORS = [
   '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', 
@@ -39,58 +35,17 @@ const Analytics = () => {
         <p className="text-gray-500">Detailed insights into bug trends and patterns</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Bugs" 
-          value={stats.totalBugs} 
-        />
-        
-        <StatCard 
-          title="Open Bugs" 
-          value={stats.openBugs} 
-          subtitle={`${Math.round(stats.openBugs / stats.totalBugs * 100)}% of all bugs`}
-        />
-        
-        <StatCard 
-          title="Fixed Bugs" 
-          value={stats.fixedBugs} 
-          subtitle={`${Math.round(stats.fixedBugs / stats.totalBugs * 100)}% of all bugs`}
-        />
-        
-        <StatCard 
-          title="Critical Bugs" 
-          value={stats.criticalBugs} 
-          subtitle={`${Math.round(stats.criticalBugs / stats.totalBugs * 100)}% of all bugs`}
-        />
-      </div>
+      <StatsOverview stats={stats} />
       
-      <Tabs defaultValue="status" className="w-full">
-        <TabsList className="grid grid-cols-4 max-w-md">
-          <TabsTrigger value="status">Status</TabsTrigger>
-          <TabsTrigger value="severity">Severity</TabsTrigger>
-          <TabsTrigger value="gameArea">Game Area</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="status" className="pt-4">
-          <StatusChart data={statusData} colors={COLORS} />
-        </TabsContent>
-        
-        <TabsContent value="severity" className="pt-4">
-          <SeverityChart data={severityData} />
-        </TabsContent>
-        
-        <TabsContent value="gameArea" className="pt-4">
-          <GameAreaChart data={gameAreaData} />
-        </TabsContent>
-        
-        <TabsContent value="timeline" className="pt-4">
-          <TimelineChart data={stats.timeData} />
-        </TabsContent>
-      </Tabs>
+      <ChartTabs 
+        statusData={statusData}
+        severityData={severityData}
+        gameAreaData={gameAreaData}
+        timeData={stats.timeData}
+        colors={COLORS}
+      />
     </div>
   );
 };
 
 export default Analytics;
-
