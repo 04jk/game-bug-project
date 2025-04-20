@@ -27,15 +27,15 @@ export const fetchUsersWithFallback = async (): Promise<User[]> => {
     
     if (profilesData && profilesData.length > 0) {
       // Map profiles to User interface
-      const users: User[] = profilesData.map(profile => {
+      const users: User[] = profilesData.map((profile: any) => {
         // Find matching auth user to get email
         const authUser = authData?.users.find(u => u.id === profile.id);
         
         return {
           id: profile.id,
-          name: profile.name,
+          name: profile.name || '',
           email: authUser?.email || 'email@example.com', // Fallback if no email found
-          role: profile.role as UserRole,
+          role: profile.role as UserRole || UserRole.TESTER,
           avatar: profile.avatar,
           team: profile.team
         };
@@ -121,7 +121,7 @@ export const loginUser = async (email: string, password: string) => {
         .single();
         
       if (profileData) {
-        localStorage.setItem('userRole', profileData.role);
+        localStorage.setItem('userRole', profileData.role as string);
         toast.success(`Welcome back, ${profileData.name}!`);
       } else {
         toast.success(`Welcome back, ${data.user.email}!`);
@@ -184,7 +184,7 @@ export const getCurrentUser = async () => {
     return { 
       ...userData, 
       email: data.session.user.email 
-    };
+    } as any;
   } catch (error) {
     console.log("Error getting current user:", error);
     // Return mock current user in development

@@ -103,8 +103,9 @@ export const RoleProvider = ({ children }: { children: ReactNode }) => {
         }
         
         if (profileData && profileData.role) {
-          setUserRole(profileData.role as UserRole);
-          localStorage.setItem('userRole', profileData.role);
+          const roleValue = profileData.role as UserRole;
+          setUserRole(roleValue);
+          localStorage.setItem('userRole', roleValue);
         }
       } catch (error) {
         console.error("Error in setRoleFromProfile:", error);
