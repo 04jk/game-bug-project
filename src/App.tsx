@@ -12,7 +12,6 @@ import NewBug from "./pages/NewBug";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import About from "./pages/About";
-import FAQ from "./pages/FAQ";
 import InfoLayout from "./pages/info/InfoLayout";
 import GettingStarted from "./pages/info/GettingStarted";
 import NotFound from "./pages/NotFound";
@@ -220,17 +219,6 @@ const App = () => {
                   <AuthGuard>
                     <Layout>
                       <About />
-                    </Layout>
-                  </AuthGuard>
-                } 
-              />
-              
-              <Route 
-                path="/faq" 
-                element={
-                  <AuthGuard>
-                    <Layout>
-                      <FAQ />
                     </Layout>
                   </AuthGuard>
                 } 

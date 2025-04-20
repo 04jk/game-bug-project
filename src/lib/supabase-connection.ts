@@ -2,7 +2,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole } from "@/types/user";
 import { toast } from "sonner";
-import { Tables } from "@/types/database.types";
 
 // This is a helper function to safely interact with Supabase
 // It will use mock data if Supabase interaction fails
@@ -11,29 +10,34 @@ export const fetchUsersWithFallback = async (): Promise<User[]> => {
     // First try to fetch users from Supabase
     const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
-      .select('*') as { data: Tables['profiles']['Row'][] | null, error: any };
+      .select('*');
     
     if (profilesError) {
       console.error("Supabase profiles error:", profilesError);
       throw profilesError;
     }
     
-    // In a real app with proper permissions, we would fetch auth users data
-    // For now, mock the email data in development
+    // Get emails from auth.users (admin only)
+    const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+    
+    if (authError) {
+      console.error("Auth users error:", authError);
+      // Continue with just profiles data
+    }
     
     if (profilesData && profilesData.length > 0) {
       // Map profiles to User interface
-      const users: User[] = profilesData.map((profile: Tables['profiles']['Row']) => {
-        // Generate mock email for development
-        const mockEmail = `${profile.name?.toLowerCase().replace(/\s+/g, '.')}@example.com` || 'user@example.com';
+      const users: User[] = profilesData.map(profile => {
+        // Find matching auth user to get email
+        const authUser = authData?.users.find(u => u.id === profile.id);
         
         return {
           id: profile.id,
-          name: profile.name || '',
-          email: mockEmail, // Mock email
-          role: (profile.role as UserRole) || UserRole.TESTER,
-          avatar: profile.avatar || undefined,
-          team: profile.team || undefined
+          name: profile.name,
+          email: authUser?.email || 'email@example.com', // Fallback if no email found
+          role: profile.role as UserRole,
+          avatar: profile.avatar,
+          team: profile.team
         };
       });
       
@@ -75,7 +79,7 @@ export const registerUser = async (email: string, password: string, userData: Pa
           id: data.user.id,
           name: userData.name,
           role: userData.role
-        }) as { error: any };
+        });
         
       if (profileError) {
         console.error("Profile creation error:", profileError);
@@ -114,10 +118,10 @@ export const loginUser = async (email: string, password: string) => {
         .from('profiles')
         .select('name, role')
         .eq('id', data.user.id)
-        .single() as { data: Tables['profiles']['Row'] | null, error: any };
+        .single();
         
       if (profileData) {
-        localStorage.setItem('userRole', profileData.role as string);
+        localStorage.setItem('userRole', profileData.role);
         toast.success(`Welcome back, ${profileData.name}!`);
       } else {
         toast.success(`Welcome back, ${data.user.email}!`);
@@ -171,7 +175,7 @@ export const getCurrentUser = async () => {
       .from('profiles')
       .select('*')
       .eq('id', data.session.user.id)
-      .single() as { data: Tables['profiles']['Row'] | null, error: any };
+      .single();
       
     if (userError || !userData) {
       return null;
@@ -180,7 +184,7 @@ export const getCurrentUser = async () => {
     return { 
       ...userData, 
       email: data.session.user.email 
-    } as any;
+    };
   } catch (error) {
     console.log("Error getting current user:", error);
     // Return mock current user in development
@@ -205,7 +209,7 @@ export const updateUserProfile = async (userId: string, profileData: Partial<Use
         team: profileData.team,
         updated_at: new Date().toISOString()
       })
-      .eq('id', userId) as { error: any };
+      .eq('id', userId);
       
     if (error) {
       console.error("Profile update error:", error);

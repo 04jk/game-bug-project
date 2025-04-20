@@ -15,7 +15,6 @@ import {
   ChevronRight,
   LogOut,
   Info,
-  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,6 @@ import { useRole } from "@/contexts/RoleContext";
 import LogoutButton from "@/components/auth/LogoutButton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UserRole } from "@/types/user";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -173,12 +171,6 @@ export default function Sidebar({ className }: SidebarProps) {
               icon={Info}
               link="/about"
               active={isActive("/about")}
-            />
-            <DashboardLink
-              title="FAQ"
-              icon={HelpCircle}
-              link="/faq"
-              active={isActive("/faq")}
             />
             <DashboardLink
               title="Help & Support"

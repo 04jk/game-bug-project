@@ -7,8 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Download, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { User, UserRole } from '@/types/user';
-import { Tables } from '@/types/database.types';
+import { User } from '@/types/user';
 
 interface ExportOption {
   id: string;
@@ -50,26 +49,33 @@ const ExportUsers = () => {
       // Fetch users from Supabase
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select('*') as { data: Tables['profiles']['Row'][] | null, error: any };
+        .select('*');
         
       if (error) {
         throw error;
       }
       
-      // Since we can't directly access auth users through regular client
-      // let's handle without admin API access for now
-      // In a real app with proper permissions, we would fetch auth users
+      // Get the auth.users data for emails (admin only)
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
       
-      // Combine data from profiles
+      if (authError) {
+        console.error("Error fetching auth users:", authError);
+        // Proceed with just the profiles data
+      }
+      
+      // Combine data from profiles and auth users
       let users: any[] = profiles || [];
       
-      // Add mock email for development if needed
-      if (import.meta.env.DEV) {
-        users = users.map(profile => ({
-          ...profile,
-          email: `${profile.name?.toLowerCase().replace(/\s+/g, '.')}@example.com` || 'unknown@example.com',
-          last_sign_in_at: new Date().toISOString(),
-        }));
+      // If we have auth users data, merge it with profiles
+      if (authUsers) {
+        users = users.map(profile => {
+          const authUser = authUsers.users.find(u => u.id === profile.id);
+          return {
+            ...profile,
+            email: authUser?.email || 'N/A',
+            last_sign_in_at: authUser?.last_sign_in_at || null,
+          };
+        });
       }
       
       // Filter fields based on selection
