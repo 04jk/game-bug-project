@@ -9,122 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      bugs: {
-        Row: {
-          assigned_to: string | null
-          attachment: string | null
-          created_at: string
-          description: string
-          frequency_of_occurrence: string | null
-          game_version: string | null
-          id: string
-          platform: string | null
-          priority: string
-          reported_by: string
-          reproducibility: string | null
-          scope_of_effect: string | null
-          severity: string
-          status: string
-          steps: string | null
-          title: string
-          type: string
-          updated_at: string
-        }
-        Insert: {
-          assigned_to?: string | null
-          attachment?: string | null
-          created_at?: string
-          description: string
-          frequency_of_occurrence?: string | null
-          game_version?: string | null
-          id?: string
-          platform?: string | null
-          priority: string
-          reported_by: string
-          reproducibility?: string | null
-          scope_of_effect?: string | null
-          severity: string
-          status: string
-          steps?: string | null
-          title: string
-          type: string
-          updated_at?: string
-        }
-        Update: {
-          assigned_to?: string | null
-          attachment?: string | null
-          created_at?: string
-          description?: string
-          frequency_of_occurrence?: string | null
-          game_version?: string | null
-          id?: string
-          platform?: string | null
-          priority?: string
-          reported_by?: string
-          reproducibility?: string | null
-          scope_of_effect?: string | null
-          severity?: string
-          status?: string
-          steps?: string | null
-          title?: string
-          type?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      comments: {
-        Row: {
-          author: string
-          bug_id: string
-          created_at: string
-          id: string
-          text: string
-        }
-        Insert: {
-          author: string
-          bug_id: string
-          created_at?: string
-          id?: string
-          text: string
-        }
-        Update: {
-          author?: string
-          bug_id?: string
-          created_at?: string
-          id?: string
-          text?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comments_bug_id_fkey"
-            columns: ["bug_id"]
-            isOneToOne: false
-            referencedRelation: "bugs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar: string | null
-          created_at: string
+          bio: string | null
+          created_at: string | null
           id: string
-          name: string
-          role: string
+          name: string | null
+          role: string | null
+          team: string | null
+          updated_at: string | null
+          username: string | null
         }
         Insert: {
           avatar?: string | null
-          created_at?: string
+          bio?: string | null
+          created_at?: string | null
           id: string
-          name: string
-          role: string
+          name?: string | null
+          role?: string | null
+          team?: string | null
+          updated_at?: string | null
+          username?: string | null
         }
         Update: {
           avatar?: string | null
-          created_at?: string
+          bio?: string | null
+          created_at?: string | null
           id?: string
-          name?: string
-          role?: string
+          name?: string | null
+          role?: string | null
+          team?: string | null
+          updated_at?: string | null
+          username?: string | null
         }
         Relationships: []
       }
