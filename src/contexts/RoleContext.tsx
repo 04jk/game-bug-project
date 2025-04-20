@@ -2,8 +2,6 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { UserRole } from '@/types/user';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { User, Session } from '@supabase/supabase-js';
 
 interface RoleContextType {
   userRole: UserRole;
@@ -12,9 +10,6 @@ interface RoleContextType {
   isDeveloper: boolean;
   isTester: boolean;
   can: (action: string) => boolean;
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
 }
 
 const RoleContext = createContext<RoleContextType | undefined>(undefined);
@@ -45,9 +40,7 @@ const rolePermissions = {
     'finish_bug',
     'join_chat',
     'search_bugs',
-    'view_docs',
-    'export_users',
-    'import_users'
+    'view_docs'
   ],
   [UserRole.PROJECT_MANAGER]: [
     'check_performance',
@@ -56,10 +49,7 @@ const rolePermissions = {
     'monitor_testers',
     'view_analytics',
     'view_reports',
-    'manage_settings',
-    'assign_bugs',
-    'view_assigned_bugs',
-    'view_created_bugs'
+    'manage_settings'
   ],
   [UserRole.DEVELOPER]: [
     'view_assigned_bugs',
@@ -82,101 +72,67 @@ const rolePermissions = {
 
 export const RoleProvider = ({ children }: { children: ReactNode }) => {
   const [userRole, setUserRole] = useState<UserRole>(UserRole.TESTER); // Default to Tester
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Function to set user role based on Supabase profile
-    const setRoleFromProfile = async (userId: string) => {
-      try {
+    // Function to fetch user role
+    const fetchUserRole = async () => {
+      // First check localStorage for cached role (faster initial load)
+      const cachedRole = localStorage.getItem('userRole');
+      if (cachedRole && Object.values(UserRole).includes(cachedRole as UserRole)) {
+        setUserRole(cachedRole as UserRole);
+      }
+      
+      // Then try to get the current authenticated user
+      const { data } = await supabase.auth.getSession();
+      
+      if (data.session?.user) {
         // Fetch user profile from Supabase
-        const { data: profileData, error } = await supabase
+        const { data: profileData } = await supabase
           .from('profiles')
           .select('role')
-          .eq('id', userId)
+          .eq('id', data.session.user.id)
           .single();
           
-        if (error) {
-          console.error("Error fetching profile:", error);
-          return;
-        }
-        
         if (profileData && profileData.role) {
-          const roleValue = profileData.role as UserRole;
-          setUserRole(roleValue);
-          localStorage.setItem('userRole', roleValue);
+          setUserRole(profileData.role as UserRole);
+          localStorage.setItem('userRole', profileData.role);
         }
-      } catch (error) {
-        console.error("Error in setRoleFromProfile:", error);
+      } else {
+        // If no session, check if we're in development mode and use default from mockUsers
+        if (import.meta.env.DEV) {
+          // In development, fall back to mock data
+          import('@/data/generators/mockUsers').then(module => {
+            setUserRole(module.currentUser.role);
+          });
+        }
       }
     };
     
     // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, sessionData) => {
-        console.log("Auth state changed:", event);
-        setSession(sessionData);
-        setUser(sessionData?.user ?? null);
-        
-        if (event === 'SIGNED_IN' && sessionData?.user) {
-          // When user signs in, fetch their role
-          setRoleFromProfile(sessionData.user.id);
-        } else if (event === 'SIGNED_OUT') {
-          // Clear role when signed out
-          localStorage.removeItem('userRole');
-          setUserRole(UserRole.TESTER); // Default back to Tester
-        }
-      }
-    );
-    
-    // Initial session check
-    const checkSession = async () => {
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Session error:", error);
-          return;
-        }
-        
-        if (data && data.session) {
-          setSession(data.session);
-          setUser(data.session.user);
+    const authListener = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Fetch user profile when signed in
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
           
-          // Get user role from profile
-          if (data.session.user) {
-            await setRoleFromProfile(data.session.user.id);
-          }
-        } else {
-          // No active session, check if we have a role in localStorage
-          const cachedRole = localStorage.getItem('userRole');
-          if (cachedRole && Object.values(UserRole).includes(cachedRole as UserRole)) {
-            setUserRole(cachedRole as UserRole);
-          }
-          
-          // In development, fall back to mock data if needed
-          if (import.meta.env.DEV && !cachedRole) {
-            try {
-              const module = await import('@/data/generators/mockUsers');
-              setUserRole(module.currentUser.role);
-            } catch (err) {
-              console.error("Error loading mock data:", err);
-            }
-          }
+        if (profileData && profileData.role) {
+          setUserRole(profileData.role as UserRole);
+          localStorage.setItem('userRole', profileData.role);
         }
-      } catch (error) {
-        console.error("Error checking session:", error);
-      } finally {
-        setIsLoading(false);
+      } else if (event === 'SIGNED_OUT') {
+        // Clear role when signed out
+        localStorage.removeItem('userRole');
+        setUserRole(UserRole.TESTER); // Default back to Tester
       }
-    };
+    });
     
-    checkSession();
+    fetchUserRole();
     
     return () => {
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, []);
   
@@ -186,11 +142,6 @@ export const RoleProvider = ({ children }: { children: ReactNode }) => {
   const isTester = userRole === UserRole.TESTER;
   
   const can = (action: string): boolean => {
-    // If no user is logged in, deny all permissions
-    if (!user && !import.meta.env.DEV) {
-      return false;
-    }
-    
     const permissions = rolePermissions[userRole] || [];
     return permissions.includes(action);
   };
@@ -201,10 +152,7 @@ export const RoleProvider = ({ children }: { children: ReactNode }) => {
     isProjectManager,
     isDeveloper,
     isTester,
-    can,
-    user,
-    session,
-    isLoading
+    can
   };
   
   return (
