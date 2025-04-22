@@ -3,10 +3,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Layout from "./components/layout/Layout";
 import Dashboard from "./pages/Dashboard";
 import BugsList from "./pages/BugsList";
+import BugDetail from "./pages/BugDetail";
 import NewBug from "./pages/NewBug";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
@@ -25,14 +26,7 @@ import Register from "./pages/auth/Register";
 import { TabsContent } from "@/components/ui/tabs";
 
 // Create a new QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 // Create a simple Contact component for the info/contact route
 const Contact = () => (
@@ -91,6 +85,7 @@ const App = () => {
                   </Layout>
                 } 
               />
+              <Route path="/bug/:id" element={<Layout><BugDetail /></Layout>} />
               
               {/* Tester Only Routes */}
               <Route 
@@ -107,7 +102,7 @@ const App = () => {
                 } 
               />
               
-              {/* Chat Room Route */}
+              {/* Chat Room Route - For Developers and Testers */}
               <Route 
                 path="/chat" 
                 element={
