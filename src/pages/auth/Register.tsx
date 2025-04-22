@@ -20,17 +20,25 @@ const registerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  role: z.enum([UserRole.TESTER, UserRole.DEVELOPER], {
+  role: z.enum([UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.DEVELOPER, UserRole.TESTER], {
     required_error: "Please select a role",
   }),
+  secretCode: z.string().optional(),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
+
+// Secret codes for admin and project manager roles
+const ROLE_SECRET_CODES = {
+  [UserRole.ADMIN]: "admin1234",
+  [UserRole.PROJECT_MANAGER]: "pm1234"
+};
 
 const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [showSecretCode, setShowSecretCode] = useState(false);
 
   // Check for existing session on component mount
   useEffect(() => {
@@ -53,14 +61,34 @@ const Register = () => {
       email: "",
       password: "",
       role: UserRole.TESTER, // Default role is Tester
+      secretCode: "",
     }
   });
+
+  // Watch the role value to determine if secret code is needed
+  const watchedRole = form.watch("role");
+  
+  useEffect(() => {
+    // Show secret code field for Admin and Project Manager roles
+    setShowSecretCode(
+      watchedRole === UserRole.ADMIN || 
+      watchedRole === UserRole.PROJECT_MANAGER
+    );
+  }, [watchedRole]);
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     setAuthError(null);
     
     try {
+      // Check if secret code is required and correct for the selected role
+      if ((data.role === UserRole.ADMIN || data.role === UserRole.PROJECT_MANAGER) && 
+          data.secretCode !== ROLE_SECRET_CODES[data.role]) {
+        setAuthError("Invalid secret code for the selected role");
+        setIsLoading(false);
+        return;
+      }
+      
       // Register the user with Supabase
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
@@ -112,7 +140,7 @@ const Register = () => {
           <CardHeader>
             <CardTitle className="text-2xl text-center">Create an Account</CardTitle>
             <CardDescription className="text-center">
-              Register as a new Tester or Developer
+              Register to join the Bug Tracking System
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -180,12 +208,39 @@ const Register = () => {
                         <SelectContent>
                           <SelectItem value={UserRole.TESTER}>Tester</SelectItem>
                           <SelectItem value={UserRole.DEVELOPER}>Developer</SelectItem>
+                          <SelectItem value={UserRole.PROJECT_MANAGER}>Project Manager</SelectItem>
+                          <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                
+                {/* Secret Code field that appears only for Admin and Project Manager roles */}
+                {showSecretCode && (
+                  <FormField
+                    control={form.control}
+                    name="secretCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Secret Code</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Enter secret code" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                        <p className="text-xs text-gray-500 mt-1">
+                          A secret code is required for Admin and Project Manager roles
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+                )}
+                
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Registering..." : "Register"}
                 </Button>

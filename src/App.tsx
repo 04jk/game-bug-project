@@ -14,6 +14,7 @@ import Settings from "./pages/Settings";
 import About from "./pages/About";
 import InfoLayout from "./pages/info/InfoLayout";
 import GettingStarted from "./pages/info/GettingStarted";
+import FAQ from "./pages/info/FAQ";
 import NotFound from "./pages/NotFound";
 import { RoleProvider } from "./contexts/RoleContext";
 import UserManagement from "./pages/admin/UserManagement";
@@ -124,6 +125,7 @@ const App = () => {
               {/* Info Routes with proper nesting */}
               <Route path="/info" element={<Layout><InfoLayout /></Layout>}>
                 <Route path="getting-started" element={<GettingStarted />} />
+                <Route path="faq" element={<FAQ />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

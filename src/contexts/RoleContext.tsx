@@ -109,7 +109,7 @@ export const RoleProvider = ({ children }: { children: ReactNode }) => {
     };
     
     // Set up auth state change listener
-    const authListener = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         // Fetch user profile when signed in
         const { data: profileData } = await supabase
@@ -132,7 +132,7 @@ export const RoleProvider = ({ children }: { children: ReactNode }) => {
     fetchUserRole();
     
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
   }, []);
   
