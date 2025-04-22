@@ -61,6 +61,25 @@ const FAQ = () => {
           </AccordionContent>
         </AccordionItem>
         
+        <AccordionItem value="admin-access">
+          <AccordionTrigger>How do I get Admin or Project Manager access?</AccordionTrigger>
+          <AccordionContent>
+            <p>To register as an Admin or Project Manager:</p>
+            <ol className="list-decimal pl-6 mt-2 space-y-1">
+              <li>Go to the registration page</li>
+              <li>Fill out your details</li>
+              <li>Select "Admin" or "Project Manager" as your role</li>
+              <li>Enter the required secret code:</li>
+              <ul className="list-disc pl-6 mt-1 mb-1">
+                <li>For Admin role: <code>admin1234</code></li>
+                <li>For Project Manager role: <code>pm1234</code></li>
+              </ul>
+              <li>Complete the registration process</li>
+            </ol>
+            <p className="mt-2">Note: In a production environment, these secret codes would be securely managed and only shared with authorized personnel. The codes shown here are for demonstration purposes only.</p>
+          </AccordionContent>
+        </AccordionItem>
+        
         <AccordionItem value="analytics">
           <AccordionTrigger>What analytics are available?</AccordionTrigger>
           <AccordionContent>
@@ -76,21 +95,6 @@ const FAQ = () => {
           </AccordionContent>
         </AccordionItem>
         
-        <AccordionItem value="admin-access">
-          <AccordionTrigger>How do I get Admin or Project Manager access?</AccordionTrigger>
-          <AccordionContent>
-            <p>To register as an Admin or Project Manager:</p>
-            <ol className="list-decimal pl-6 mt-2 space-y-1">
-              <li>Go to the registration page</li>
-              <li>Fill out your details</li>
-              <li>Select "Admin" or "Project Manager" as your role</li>
-              <li>Enter the required secret code (contact your system administrator for this code)</li>
-              <li>Complete the registration process</li>
-            </ol>
-            <p className="mt-2">For security reasons, Admin and Project Manager roles require special authorization.</p>
-          </AccordionContent>
-        </AccordionItem>
-        
         <AccordionItem value="data-storage">
           <AccordionTrigger>How is bug data stored and secured?</AccordionTrigger>
           <AccordionContent>
@@ -102,6 +106,33 @@ const FAQ = () => {
               <li>Regularly backed up to prevent data loss</li>
             </ul>
             <p className="mt-2">User authentication and data access are managed through secure tokens and role-based permissions.</p>
+          </AccordionContent>
+        </AccordionItem>
+        
+        <AccordionItem value="support">
+          <AccordionTrigger>How can I get help if I encounter issues?</AccordionTrigger>
+          <AccordionContent>
+            <p>For technical support or assistance:</p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>Email our support team at <a href="mailto:support@bugsquasher.com" className="text-primary hover:underline">support@bugsquasher.com</a></li>
+              <li>Check our documentation in the "Getting Started" section</li>
+              <li>Use the in-app chat support available during business hours</li>
+            </ul>
+            <p className="mt-2">Our support team typically responds within 24 hours during business days.</p>
+          </AccordionContent>
+        </AccordionItem>
+        
+        <AccordionItem value="login-issues">
+          <AccordionTrigger>What should I do if I can't log in?</AccordionTrigger>
+          <AccordionContent>
+            <p>If you're having trouble logging in:</p>
+            <ol className="list-decimal pl-6 mt-2 space-y-1">
+              <li>Check that you're using the correct email and password</li>
+              <li>Ensure your account has been activated (check your email for verification)</li>
+              <li>Try the "Forgot Password" option to reset your credentials</li>
+              <li>Clear your browser cache and cookies, then try again</li>
+              <li>If problems persist, contact your system administrator or our support team</li>
+            </ol>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
