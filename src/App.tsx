@@ -12,48 +12,73 @@ import NewBug from "./pages/NewBug";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import About from "./pages/About";
+import FAQ from "./pages/FAQ";
 import InfoLayout from "./pages/info/InfoLayout";
 import GettingStarted from "./pages/info/GettingStarted";
-import FAQ from "./pages/info/FAQ";
 import NotFound from "./pages/NotFound";
-import { RoleProvider } from "./contexts/RoleContext";
+import { RoleProvider, useRole } from "./contexts/RoleContext";
 import UserManagement from "./pages/admin/UserManagement";
 import RoleGuard from "./components/auth/RoleGuard";
 import { UserRole } from "./types/user";
 import ChatRoom from "./pages/ChatRoom";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
 
-// Create a simple Contact component for the info/contact route
-const Contact = () => (
-  <TabsContent value="contact">
-    <div className="py-4">
-      <h2 className="text-2xl font-semibold mb-4">Contact Support</h2>
-      <p className="mb-4">Need help with BugSquasher? Our support team is ready to assist you.</p>
-      
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-        <h3 className="font-medium text-lg mb-2">Email Support</h3>
-        <p>Email us at: <a href="mailto:support@bugsquasher.com" className="text-primary hover:underline">support@bugsquasher.com</a></p>
-        <p className="text-sm text-gray-500 mt-1">We typically respond within 24 hours during business days.</p>
+// AuthGuard component to protect routes
+const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+  const { user, isLoading } = useRole();
+  const [checking, setChecking] = useState(true);
+  
+  useEffect(() => {
+    // Check for session using Supabase directly
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          // No session found
+          setChecking(false);
+        } else {
+          // Session found
+          setChecking(false);
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        setChecking(false);
+      }
+    };
+    
+    if (!isLoading) {
+      if (user) {
+        setChecking(false);
+      } else {
+        checkSession();
+      }
+    }
+  }, [user, isLoading]);
+  
+  if (isLoading || checking) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+        <span className="ml-2">Loading...</span>
       </div>
-      
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-        <h3 className="font-medium text-lg mb-2">Business Hours</h3>
-        <p>Monday to Friday: 9am to 5pm EST</p>
-        <p>Weekend support available for emergency issues only.</p>
-      </div>
-      
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <h3 className="font-medium text-lg mb-2">Admin Support</h3>
-        <p>For Admin or Project Manager role access:</p>
-        <p>Contact your organization's system administrator or email <a href="mailto:admin@bugsquasher.com" className="text-primary hover:underline">admin@bugsquasher.com</a> with your request.</p>
-      </div>
-    </div>
-  </TabsContent>
-);
+    );
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 const App = () => {
   return (
@@ -67,37 +92,62 @@ const App = () => {
               {/* Auth Routes - Not inside layout */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               
-              {/* Main Dashboard */}
-              <Route path="/" element={<Layout><Dashboard /></Layout>} />
+              {/* Main Dashboard - Protected */}
+              <Route 
+                path="/" 
+                element={
+                  <AuthGuard>
+                    <Layout>
+                      <Dashboard />
+                    </Layout>
+                  </AuthGuard>
+                } 
+              />
               
               {/* Developer & Tester Routes */}
               <Route 
                 path="/bugs" 
                 element={
-                  <Layout>
-                    <RoleGuard 
-                      allowedRoles={[UserRole.DEVELOPER, UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN]}
-                    >
-                      <BugsList />
-                    </RoleGuard>
-                  </Layout>
+                  <AuthGuard>
+                    <Layout>
+                      <RoleGuard 
+                        allowedRoles={[UserRole.DEVELOPER, UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN]}
+                      >
+                        <BugsList />
+                      </RoleGuard>
+                    </Layout>
+                  </AuthGuard>
                 } 
               />
-              <Route path="/bug/:id" element={<Layout><BugDetail /></Layout>} />
+              
+              <Route 
+                path="/bug/:id" 
+                element={
+                  <AuthGuard>
+                    <Layout>
+                      <BugDetail />
+                    </Layout>
+                  </AuthGuard>
+                } 
+              />
               
               {/* Tester Only Routes */}
               <Route 
                 path="/new-bug" 
                 element={
-                  <Layout>
-                    <RoleGuard 
-                      allowedRoles={[UserRole.TESTER, UserRole.ADMIN]}
-                      fallback={<Navigate to="/" replace />}
-                    >
-                      <NewBug />
-                    </RoleGuard>
-                  </Layout>
+                  <AuthGuard>
+                    <Layout>
+                      <RoleGuard 
+                        allowedRoles={[UserRole.TESTER, UserRole.ADMIN]}
+                        fallback={<Navigate to="/" replace />}
+                      >
+                        <NewBug />
+                      </RoleGuard>
+                    </Layout>
+                  </AuthGuard>
                 } 
               />
               
@@ -105,14 +155,16 @@ const App = () => {
               <Route 
                 path="/chat" 
                 element={
-                  <Layout>
-                    <RoleGuard 
-                      allowedRoles={[UserRole.DEVELOPER, UserRole.TESTER, UserRole.ADMIN]}
-                      fallback={<Navigate to="/" replace />}
-                    >
-                      <ChatRoom />
-                    </RoleGuard>
-                  </Layout>
+                  <AuthGuard>
+                    <Layout>
+                      <RoleGuard 
+                        allowedRoles={[UserRole.DEVELOPER, UserRole.TESTER, UserRole.ADMIN]}
+                        fallback={<Navigate to="/" replace />}
+                      >
+                        <ChatRoom />
+                      </RoleGuard>
+                    </Layout>
+                  </AuthGuard>
                 } 
               />
               
@@ -120,14 +172,16 @@ const App = () => {
               <Route 
                 path="/analytics" 
                 element={
-                  <Layout>
-                    <RoleGuard 
-                      allowedRoles={[UserRole.PROJECT_MANAGER, UserRole.ADMIN]}
-                      fallback={<Navigate to="/" replace />}
-                    >
-                      <Analytics />
-                    </RoleGuard>
-                  </Layout>
+                  <AuthGuard>
+                    <Layout>
+                      <RoleGuard 
+                        allowedRoles={[UserRole.PROJECT_MANAGER, UserRole.ADMIN]}
+                        fallback={<Navigate to="/" replace />}
+                      >
+                        <Analytics />
+                      </RoleGuard>
+                    </Layout>
+                  </AuthGuard>
                 } 
               />
               
@@ -135,27 +189,65 @@ const App = () => {
               <Route 
                 path="/users" 
                 element={
-                  <Layout>
-                    <RoleGuard 
-                      allowedRoles={[UserRole.ADMIN]}
-                      fallback={<Navigate to="/" replace />}
-                    >
-                      <UserManagement />
-                    </RoleGuard>
-                  </Layout>
+                  <AuthGuard>
+                    <Layout>
+                      <RoleGuard 
+                        allowedRoles={[UserRole.ADMIN]}
+                        fallback={<Navigate to="/" replace />}
+                      >
+                        <UserManagement />
+                      </RoleGuard>
+                    </Layout>
+                  </AuthGuard>
                 } 
               />
               
               {/* Common Routes */}
-              <Route path="/settings" element={<Layout><Settings /></Layout>} />
-              <Route path="/about" element={<Layout><About /></Layout>} />
+              <Route 
+                path="/settings" 
+                element={
+                  <AuthGuard>
+                    <Layout>
+                      <Settings />
+                    </Layout>
+                  </AuthGuard>
+                } 
+              />
+              
+              <Route 
+                path="/about" 
+                element={
+                  <AuthGuard>
+                    <Layout>
+                      <About />
+                    </Layout>
+                  </AuthGuard>
+                } 
+              />
+              
+              <Route 
+                path="/faq" 
+                element={
+                  <AuthGuard>
+                    <Layout>
+                      <FAQ />
+                    </Layout>
+                  </AuthGuard>
+                } 
+              />
               
               {/* Info Routes with proper nesting */}
-              <Route path="/info" element={<Layout><InfoLayout /></Layout>}>
-                <Route index element={<Navigate to="/info/getting-started" replace />} />
+              <Route 
+                path="/info" 
+                element={
+                  <AuthGuard>
+                    <Layout>
+                      <InfoLayout />
+                    </Layout>
+                  </AuthGuard>
+                }
+              >
                 <Route path="getting-started" element={<GettingStarted />} />
-                <Route path="faq" element={<FAQ />} />
-                <Route path="contact" element={<Contact />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

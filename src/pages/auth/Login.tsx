@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { loginUser } from '@/lib/supabase-connection';
 import { supabase } from "@/integrations/supabase/client";
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -54,6 +53,7 @@ const Login = () => {
     setAuthError(null);
     
     try {
+      // Login the user with Supabase
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
@@ -63,8 +63,6 @@ const Login = () => {
         setAuthError(error.message);
         toast.error("Login failed: " + error.message);
       } else if (authData.user) {
-        toast.success(`Welcome back, ${authData.user.email}!`);
-        
         // Fetch user profile to get role
         const { data: profileData } = await supabase
           .from('profiles')
@@ -74,7 +72,9 @@ const Login = () => {
           
         if (profileData) {
           localStorage.setItem('userRole', profileData.role);
-          toast.success(`Logged in as ${profileData.name} (${profileData.role})`);
+          toast.success(`Welcome back, ${profileData.name}!`);
+        } else {
+          toast.success(`Welcome back, ${authData.user.email}!`);
         }
         
         navigate('/');
