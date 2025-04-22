@@ -23,6 +23,7 @@ import { UserRole } from "./types/user";
 import ChatRoom from "./pages/ChatRoom";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import { TabsContent } from "@/components/ui/tabs";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
