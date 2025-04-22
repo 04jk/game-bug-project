@@ -12,73 +12,20 @@ import NewBug from "./pages/NewBug";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import About from "./pages/About";
-import FAQ from "./pages/FAQ";
 import InfoLayout from "./pages/info/InfoLayout";
 import GettingStarted from "./pages/info/GettingStarted";
+import FAQ from "./pages/info/FAQ";
 import NotFound from "./pages/NotFound";
-import { RoleProvider, useRole } from "./contexts/RoleContext";
+import { RoleProvider } from "./contexts/RoleContext";
 import UserManagement from "./pages/admin/UserManagement";
 import RoleGuard from "./components/auth/RoleGuard";
 import { UserRole } from "./types/user";
 import ChatRoom from "./pages/ChatRoom";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient();
-
-// AuthGuard component to protect routes
-const AuthGuard = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useRole();
-  const [checking, setChecking] = useState(true);
-  
-  useEffect(() => {
-    // Check for session using Supabase directly
-    const checkSession = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          // No session found
-          setChecking(false);
-        } else {
-          // Session found
-          setChecking(false);
-        }
-      } catch (error) {
-        console.error("Error checking session:", error);
-        setChecking(false);
-      }
-    };
-    
-    if (!isLoading) {
-      if (user) {
-        setChecking(false);
-      } else {
-        checkSession();
-      }
-    }
-  }, [user, isLoading]);
-  
-  if (isLoading || checking) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="animate-spin h-8 w-8 text-primary" />
-        <span className="ml-2">Loading...</span>
-      </div>
-    );
-  }
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  return <>{children}</>;
-};
 
 const App = () => {
   return (
@@ -92,62 +39,37 @@ const App = () => {
               {/* Auth Routes - Not inside layout */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
               
-              {/* Main Dashboard - Protected */}
-              <Route 
-                path="/" 
-                element={
-                  <AuthGuard>
-                    <Layout>
-                      <Dashboard />
-                    </Layout>
-                  </AuthGuard>
-                } 
-              />
+              {/* Main Dashboard */}
+              <Route path="/" element={<Layout><Dashboard /></Layout>} />
               
               {/* Developer & Tester Routes */}
               <Route 
                 path="/bugs" 
                 element={
-                  <AuthGuard>
-                    <Layout>
-                      <RoleGuard 
-                        allowedRoles={[UserRole.DEVELOPER, UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN]}
-                      >
-                        <BugsList />
-                      </RoleGuard>
-                    </Layout>
-                  </AuthGuard>
+                  <Layout>
+                    <RoleGuard 
+                      allowedRoles={[UserRole.DEVELOPER, UserRole.TESTER, UserRole.PROJECT_MANAGER, UserRole.ADMIN]}
+                    >
+                      <BugsList />
+                    </RoleGuard>
+                  </Layout>
                 } 
               />
-              
-              <Route 
-                path="/bug/:id" 
-                element={
-                  <AuthGuard>
-                    <Layout>
-                      <BugDetail />
-                    </Layout>
-                  </AuthGuard>
-                } 
-              />
+              <Route path="/bug/:id" element={<Layout><BugDetail /></Layout>} />
               
               {/* Tester Only Routes */}
               <Route 
                 path="/new-bug" 
                 element={
-                  <AuthGuard>
-                    <Layout>
-                      <RoleGuard 
-                        allowedRoles={[UserRole.TESTER, UserRole.ADMIN]}
-                        fallback={<Navigate to="/" replace />}
-                      >
-                        <NewBug />
-                      </RoleGuard>
-                    </Layout>
-                  </AuthGuard>
+                  <Layout>
+                    <RoleGuard 
+                      allowedRoles={[UserRole.TESTER, UserRole.ADMIN]}
+                      fallback={<Navigate to="/" replace />}
+                    >
+                      <NewBug />
+                    </RoleGuard>
+                  </Layout>
                 } 
               />
               
@@ -155,16 +77,14 @@ const App = () => {
               <Route 
                 path="/chat" 
                 element={
-                  <AuthGuard>
-                    <Layout>
-                      <RoleGuard 
-                        allowedRoles={[UserRole.DEVELOPER, UserRole.TESTER, UserRole.ADMIN]}
-                        fallback={<Navigate to="/" replace />}
-                      >
-                        <ChatRoom />
-                      </RoleGuard>
-                    </Layout>
-                  </AuthGuard>
+                  <Layout>
+                    <RoleGuard 
+                      allowedRoles={[UserRole.DEVELOPER, UserRole.TESTER, UserRole.ADMIN]}
+                      fallback={<Navigate to="/" replace />}
+                    >
+                      <ChatRoom />
+                    </RoleGuard>
+                  </Layout>
                 } 
               />
               
@@ -172,16 +92,14 @@ const App = () => {
               <Route 
                 path="/analytics" 
                 element={
-                  <AuthGuard>
-                    <Layout>
-                      <RoleGuard 
-                        allowedRoles={[UserRole.PROJECT_MANAGER, UserRole.ADMIN]}
-                        fallback={<Navigate to="/" replace />}
-                      >
-                        <Analytics />
-                      </RoleGuard>
-                    </Layout>
-                  </AuthGuard>
+                  <Layout>
+                    <RoleGuard 
+                      allowedRoles={[UserRole.PROJECT_MANAGER, UserRole.ADMIN]}
+                      fallback={<Navigate to="/" replace />}
+                    >
+                      <Analytics />
+                    </RoleGuard>
+                  </Layout>
                 } 
               />
               
@@ -189,65 +107,25 @@ const App = () => {
               <Route 
                 path="/users" 
                 element={
-                  <AuthGuard>
-                    <Layout>
-                      <RoleGuard 
-                        allowedRoles={[UserRole.ADMIN]}
-                        fallback={<Navigate to="/" replace />}
-                      >
-                        <UserManagement />
-                      </RoleGuard>
-                    </Layout>
-                  </AuthGuard>
+                  <Layout>
+                    <RoleGuard 
+                      allowedRoles={[UserRole.ADMIN]}
+                      fallback={<Navigate to="/" replace />}
+                    >
+                      <UserManagement />
+                    </RoleGuard>
+                  </Layout>
                 } 
               />
               
               {/* Common Routes */}
-              <Route 
-                path="/settings" 
-                element={
-                  <AuthGuard>
-                    <Layout>
-                      <Settings />
-                    </Layout>
-                  </AuthGuard>
-                } 
-              />
-              
-              <Route 
-                path="/about" 
-                element={
-                  <AuthGuard>
-                    <Layout>
-                      <About />
-                    </Layout>
-                  </AuthGuard>
-                } 
-              />
-              
-              <Route 
-                path="/faq" 
-                element={
-                  <AuthGuard>
-                    <Layout>
-                      <FAQ />
-                    </Layout>
-                  </AuthGuard>
-                } 
-              />
+              <Route path="/settings" element={<Layout><Settings /></Layout>} />
+              <Route path="/about" element={<Layout><About /></Layout>} />
               
               {/* Info Routes with proper nesting */}
-              <Route 
-                path="/info" 
-                element={
-                  <AuthGuard>
-                    <Layout>
-                      <InfoLayout />
-                    </Layout>
-                  </AuthGuard>
-                }
-              >
+              <Route path="/info" element={<Layout><InfoLayout /></Layout>}>
                 <Route path="getting-started" element={<GettingStarted />} />
+                <Route path="faq" element={<FAQ />} />
               </Route>
               
               <Route path="*" element={<NotFound />} />

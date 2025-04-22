@@ -20,25 +20,25 @@ const registerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  role: z.enum([UserRole.TESTER, UserRole.DEVELOPER, UserRole.PROJECT_MANAGER, UserRole.ADMIN], {
+  role: z.enum([UserRole.ADMIN, UserRole.PROJECT_MANAGER, UserRole.DEVELOPER, UserRole.TESTER], {
     required_error: "Please select a role",
   }),
-  roleKey: z.string().optional(),
+  secretCode: z.string().optional(),
 });
 
-// Role access keys (in a real app, these should be in a .env file or a secure database)
-const ROLE_ACCESS_KEYS = {
-  [UserRole.PROJECT_MANAGER]: "pm-access-key",
-  [UserRole.ADMIN]: "admin-access-key"
-};
-
 type RegisterFormData = z.infer<typeof registerSchema>;
+
+// Secret codes for admin and project manager roles
+const ROLE_SECRET_CODES = {
+  [UserRole.ADMIN]: "admin1234",
+  [UserRole.PROJECT_MANAGER]: "pm1234"
+};
 
 const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [showRoleKey, setShowRoleKey] = useState(false);
+  const [showSecretCode, setShowSecretCode] = useState(false);
 
   // Check for existing session on component mount
   useEffect(() => {
@@ -61,26 +61,30 @@ const Register = () => {
       email: "",
       password: "",
       role: UserRole.TESTER, // Default role is Tester
-      roleKey: "",
+      secretCode: "",
     }
   });
 
-  // Watch the role field to show/hide the roleKey field
-  const watchRole = form.watch("role");
+  // Watch the role value to determine if secret code is needed
+  const watchedRole = form.watch("role");
   
   useEffect(() => {
-    setShowRoleKey(watchRole === UserRole.ADMIN || watchRole === UserRole.PROJECT_MANAGER);
-  }, [watchRole]);
+    // Show secret code field for Admin and Project Manager roles
+    setShowSecretCode(
+      watchedRole === UserRole.ADMIN || 
+      watchedRole === UserRole.PROJECT_MANAGER
+    );
+  }, [watchedRole]);
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     setAuthError(null);
     
     try {
-      // Check role key for restricted roles
+      // Check if secret code is required and correct for the selected role
       if ((data.role === UserRole.ADMIN || data.role === UserRole.PROJECT_MANAGER) && 
-          data.roleKey !== ROLE_ACCESS_KEYS[data.role]) {
-        setAuthError(`Invalid access key for ${data.role} role`);
+          data.secretCode !== ROLE_SECRET_CODES[data.role]) {
+        setAuthError("Invalid secret code for the selected role");
         setIsLoading(false);
         return;
       }
@@ -136,7 +140,7 @@ const Register = () => {
           <CardHeader>
             <CardTitle className="text-2xl text-center">Create an Account</CardTitle>
             <CardDescription className="text-center">
-              Register as a new user to access the Bug Tracking System
+              Register to join the Bug Tracking System
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -213,21 +217,25 @@ const Register = () => {
                   )}
                 />
                 
-                {showRoleKey && (
+                {/* Secret Code field that appears only for Admin and Project Manager roles */}
+                {showSecretCode && (
                   <FormField
                     control={form.control}
-                    name="roleKey"
+                    name="secretCode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Role Access Key</FormLabel>
+                        <FormLabel>Secret Code</FormLabel>
                         <FormControl>
                           <Input 
                             type="password" 
-                            placeholder="Enter access key for this role" 
+                            placeholder="Enter secret code" 
                             {...field} 
                           />
                         </FormControl>
                         <FormMessage />
+                        <p className="text-xs text-gray-500 mt-1">
+                          A secret code is required for Admin and Project Manager roles
+                        </p>
                       </FormItem>
                     )}
                   />
